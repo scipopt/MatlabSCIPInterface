@@ -19,7 +19,7 @@
 #include "scipnlmex.h"
 
 /* enable for debugging: */
-#define DEBUG 1
+/* #define DEBUG 1 */
 
 /* function buffer size [maximum expressions & variables to hold for post-processing] */
 #define MAX_DEPTH 512
@@ -834,13 +834,11 @@ double addNonlinearCon(
    /* memory clean up */
    for (int k = expno; k >= 0; --k)
    {
-      mexPrintf("releasing expression %d\n", k);
       SCIP_ERR( SCIPreleaseExpr(scip, &exp[k]), "Error releasing expression.");
    }
 
    for (int k = no_var - 1; k >= 0; --k)
    {
-      mexPrintf("releasing variable %d\n", k);
       SCIP_ERR( SCIPreleaseExpr(scip, &expvars[k]), "Error releasing variable expression.");
    }
 
