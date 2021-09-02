@@ -147,6 +147,35 @@ may compile the mex files manually using the Matlab mex compiler
 directly in the system console, but no active support for this process
 is provided.
 
+#### Linux: Problems with Lapack/MKL using SCIP with IPOPT
+
+This problem will often manifest with the message:
+
+'Intel MKL ERROR: Parameter 5 was incorrect on entry to DSYEV.'
+
+Matlab under Linux ships with a MKL version that replaces Blas, but is
+compiled with 64 Bit integers. The dynamic shared object loader will
+replace the Lapack/Blas implementation used by IPOPT by this MKL. If
+IPOPT uses a 32 Bit version, this causes a crash.
+
+There does not seem to exist a nice solution, but the following two
+might work for you:
+
+- You can tell the system to use the Lapack versions that were used by IPOPT with
+
+  `LD_PRELOAD=/path/to/Lapack/liblapack.so matlab`
+
+  Possibly further shared libraries have to be added.
+
+  This solutions seems to work, but has the price that all comands in
+  Matlab that use Lapack will fail (because they do not use MKL
+  anymore). In particular, eigenvalue comutations will fail.
+
+- You can build IPOPT and possibly linear algebra packages like Mumps
+  statically. We have not yet been able to fully test whether this works.
+
+Any further solution options are welcome.
+
 #### Error after compilation
 
 One possible error is:
