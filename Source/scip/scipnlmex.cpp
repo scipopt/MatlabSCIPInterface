@@ -43,14 +43,15 @@ void debugPrintState(
    int                   savvar,
    int                   savpro,
    int                   varcnt
+   double                num
    )
 {
    const char* strs[18] = {"EXIT","EMPTY","READ","NUM","VAR","EXPRSN","MUL","DIV","ADD","SUB","SQUARE","SQRT","POWER","EXPNT","LOG","SIN","COS","TAN"};
 
    if ( state == 99 )
       state = -3;
-   mexPrintf("State: %-8s ARG 0: %-8s ARG 1: %-8s PSAVEXP: %3d PSAVVAR: %3d PSAVPRO: %3d VARCNT: %3d\n",
-      strs[state+3], strs[args[0]+3], strs[args[1]+3], savexp, savvar, savpro, varcnt);
+   mexPrintf("State: %-8s ARG 0: %-8s ARG 1: %-8s PSAVEXP: %3d PSAVVAR: %3d PSAVPRO: %3d VARCNT: %3d  num: %g\n",
+      strs[state+3], strs[args[0]+3], strs[args[1]+3], savexp, savvar, savpro, varcnt, num);
 }
 
 
@@ -222,7 +223,7 @@ double addNonlinearCon(
    for (i = 0; i < no_instr; i++)
    {
 #ifdef DEBUG
-      debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt);
+      debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt, num);
 #endif
 
       switch(state)
@@ -794,7 +795,7 @@ double addNonlinearCon(
       }
    }
 #ifdef DEBUG
-   debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt);
+   debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt, num);
    mexPrintf("\n---------------------------------------\nSummary at Expression Tree Create:\n");
    mexPrintf("expno:  %3d [should equal %3d]\nvarcnt: %3d [should equal %3d]\n", expno, no_ops-1, varcnt, no_var-1);
    mexPrintf("---------------------------------------\n");
@@ -1067,7 +1068,7 @@ double addNonlinearCon(
    for (i = 0; i < no_instr; i++)
    {
 #ifdef DEBUG
-      debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt);
+      debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt, num);
 #endif
 
       switch(state)
@@ -1621,7 +1622,7 @@ double addNonlinearCon(
       }
    }
 #ifdef DEBUG
-   debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt);
+   debugPrintState(state, args, psavexplst, psavvarlst, psavprolst, varcnt, num);
    mexPrintf("\n---------------------------------------\nSummary at Expression Tree Create:\n");
    mexPrintf("expno:  %3d [should equal %3d]\nvarcnt: %3d [should equal %3d]\n", expno, no_ops-1, varcnt, no_var-1);
    mexPrintf("---------------------------------------\n");
