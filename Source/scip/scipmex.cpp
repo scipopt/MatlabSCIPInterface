@@ -1278,7 +1278,7 @@ void mexFunction(
          conval = mxGetPr(mxGetField(prhs[eNLCON], 0, "nlcon_val"));
 
          /* check if we have initial guess to use */
-         if ( mxGetField(prhs[eNLCON],0,"x0") )
+         if ( mxGetField(prhs[eNLCON], 0, "x0") )
             x0 = mxGetPr(mxGetField(prhs[eNLCON], 0, "x0"));
       }
 
@@ -1406,6 +1406,8 @@ void mexFunction(
       if ( mxGetField(OPTS, 0, "scipopts") )
          processUserOpts(scip, mxGetField(OPTS, 0, "scipopts"));
    }
+
+   /* SCIP_ERR( SCIPwriteOrigProblem(scip, NULL, "cip", FALSE), "Error writing CIP File."); */
 
    /* solve problem if not in testing mode or gams writing mode */
    if ( tm == 0 && strlen(cipfile) == 0 )
