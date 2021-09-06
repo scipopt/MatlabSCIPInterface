@@ -6,6 +6,7 @@
  * Authors:
  * - Jonathan Currie
  * - Marc Pfetsch
+ * - Stefan Vigerske
  */
 
 /* If some symbols are undefined, consider undefining the following:
@@ -42,7 +43,7 @@ void debugPrintState(
    int                   savexp,
    int                   savvar,
    int                   savpro,
-   int                   varcnt
+   int                   varcnt,
    double                num
    )
 {
@@ -383,14 +384,12 @@ double addNonlinearCon(
                break;
 
             case DIV:
-               SCIP_EXPR* divexp[2]; /* intermediate expressions */
+               SCIP_EXPR* divexp; /* intermediate expression */
 
-               SCIP_ERR( SCIPcreateExprValue(scip, &divexp[0], num, NULL, NULL), "Error creating division intermediate expression.");
-               SCIP_ERR( SCIPcreateExprPow(scip, &divexp[1], expvars[vari], -1.0, NULL, NULL), "Error creating division expression." );
-               SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 2, divexp, 1.0, NULL, NULL), "Error creating divide expression (num / var).");
+               SCIP_ERR( SCIPcreateExprPow(scip, &divexp, expvars[vari], -1.0, NULL, NULL), "Error creating division expression." );
+               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &divexp, &num, 0.0, NULL, NULL), "Error creating linear multiply expression (num * var^-1).");
 
-               SCIP_ERR( SCIPreleaseExpr(scip, &divexp[1]), "Error releasing expression.");
-               SCIP_ERR( SCIPreleaseExpr(scip, &divexp[0]), "Error releasing expression.");
+               SCIP_ERR( SCIPreleaseExpr(scip, &divexp), "Error releasing expression.");
                break;
 
             case POW:
@@ -420,11 +419,14 @@ double addNonlinearCon(
                break;
 
             case DIV:
-               SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 1, &expvars[vari], 1.0 / num, NULL, NULL), "Error creating divide expression (var * 1/num).");
+            {
+               if ( num == 0.0 )
+                  mexErrMsgTxt("Division by constant 0.");
+               SCIP_Real coef = 1.0 / num;
+               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &expvars[vari], &coef, 0.0, NULL, NULL), "Error creating linear multiply expression (var * 1/num).");
                break;
-
+            }
             case POW:
-               /* check for integer power (may need to think of a better way) */
                SCIP_ERR( SCIPcreateExprPow(scip, &exp[expno], expvars[vari], num, NULL, NULL), "Error creating power expression." );
                break;
 
@@ -461,7 +463,7 @@ double addNonlinearCon(
 
                divexp[0] = expvars[vari-1];
                SCIP_ERR( SCIPcreateExprPow(scip, &divexp[1], expvars[vari], -1.0, NULL, NULL), "Error creating division intermediate expression.");
-               SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 2, divexp, 1.0, NULL, NULL), "Error creating divide expression (var * 1/num).");
+               SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 2, divexp, 1.0, NULL, NULL), "Error creating divide expression (var * 1/var).");
                SCIP_ERR( SCIPreleaseExpr(scip, &divexp[1]), "Error releasing expression.");
                break;
 
@@ -496,7 +498,7 @@ double addNonlinearCon(
                break;
 
             case MUL:
-               SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 1, &exp[expno-1], num, NULL, NULL), "Error creating linear multiply expression (exp * num).");
+               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &exp[expno-1], &num, 0.0, NULL, NULL), "Error creating linear multiply expression (exp * num).");
                break;
 
             case DIV:
@@ -505,15 +507,20 @@ double addNonlinearCon(
                {  /* flip */
                   SCIP_EXPR* divexp; /* intermediate expression */
                   SCIP_ERR( SCIPcreateExprPow(scip, &divexp, exp[expno-1], -1.0, NULL, NULL), "Error creating division intermediate expression.");
-                  SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 1, &divexp, num, NULL, NULL), "Error creating linear multiply expression (num / exp).");
+                  SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &divexp, &num, 0.0, NULL, NULL), "Error creating linear multiply expression (num / exp).");
                   SCIP_ERR( SCIPreleaseExpr(scip, &divexp), "Error releasing expression.");
                }
                else
-                  SCIP_ERR( SCIPcreateExprProduct(scip, &exp[expno], 1, &exp[expno-1], 1.0 / num, NULL, NULL), "Error creating linear multiply expression (exp / num).");
+               {
+                  if ( num == 0.0 )
+                     mexErrMsgTxt("Division by constant 0.");
+                  SCIP_Real coef = 1.0 / num;
+                  SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &exp[expno-1], &coef, 0.0, NULL, NULL), "Error creating linear multiply expression (exp / num).");
+               }
                break;
 
             case POW:
-               SCIP_ERR( SCIPcreateExprPow(scip, &exp[expno], exp[expno-1], num, NULL, NULL), "Error creating division intermediate expression.");
+               SCIP_ERR( SCIPcreateExprPow(scip, &exp[expno], exp[expno-1], num, NULL, NULL), "Error creating power expression.");
                break;
 
             default:
@@ -602,7 +609,7 @@ double addNonlinearCon(
             case ADD:
                termcoef[0] = 1.0;
                termcoef[1] = 1.0;
-               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 2, termexp, termcoef, 0.0, NULL, NULL), "Error creating add expression (exp + var).");
+               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 2, termexp, termcoef, 0.0, NULL, NULL), "Error creating add expression (exp + exp).");
                break;
 
             case SUB:
@@ -617,7 +624,7 @@ double addNonlinearCon(
                   termcoef[0] = 1.0;
                   termcoef[1] = -1.0;
                }
-               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 2, termexp, termcoef, 0.0, NULL, NULL), "Error creating subtract expression (exp - var or var - exp).");
+               SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 2, termexp, termcoef, 0.0, NULL, NULL), "Error creating subtract expression (exp - exp or exp - exp).");
                break;
 
             case MUL:
@@ -665,6 +672,8 @@ double addNonlinearCon(
       case EXPNT:
       case LOG:
       case ABS:
+      case SIN:
+      case COS:
 
          /* read variable index */
          vari = varcnt;
@@ -725,12 +734,20 @@ double addNonlinearCon(
                break;
 
             case LOG:
-               SCIP_ERR( SCIPcreateExprLog(scip, &exp[expno], expvars[vari], NULL, NULL), "Error creating exponential expression exp(var).");
+               SCIP_ERR( SCIPcreateExprLog(scip, &exp[expno], expvars[vari], NULL, NULL), "Error creating logarithm expression log(var).");
                break;
 
             case ABS:
-               SCIP_ERR( SCIPcreateExprAbs(scip, &exp[expno], expvars[vari], NULL, NULL), "Error creating exponential expression exp(var).");
+               SCIP_ERR( SCIPcreateExprAbs(scip, &exp[expno], expvars[vari], NULL, NULL), "Error creating absolute-value expression abs(var).");
                break;
+
+            case SIN:
+               SCIP_ERR( SCIPcreateExprSin(scip, &exp[expno], expvars[vari], NULL, NULL), "Error creating sinus expression sin(var).");
+               break;
+
+            case COS:
+               SCIP_ERR( SCIPcreateExprCos(scip, &exp[expno], expvars[vari], NULL, NULL), "Error creating cosinus expression cos(var).");
+                break;
 
             default:
                mexErrMsgTxt("Operator not implemented yet for FCN ( VAR )!");
@@ -752,11 +769,19 @@ double addNonlinearCon(
                break;
 
             case LOG:
-               SCIP_ERR( SCIPcreateExprLog(scip, &exp[expno], exp[expno-1], NULL, NULL), "Error creating exponential expression log(exp).");
+               SCIP_ERR( SCIPcreateExprLog(scip, &exp[expno], exp[expno-1], NULL, NULL), "Error creating logarithm expression log(exp).");
                break;
 
             case ABS:
-               SCIP_ERR( SCIPcreateExprAbs(scip, &exp[expno], exp[expno-1], NULL, NULL), "Error creating exponential expression abs(exp).");
+               SCIP_ERR( SCIPcreateExprAbs(scip, &exp[expno], exp[expno-1], NULL, NULL), "Error creating absolute-value expression abs(exp).");
+               break;
+
+            case SIN:
+               SCIP_ERR( SCIPcreateExprSin(scip, &exp[expno], exp[expno-1], NULL, NULL), "Error creating sinus expression sin(exp).");
+               break;
+
+            case COS:
+               SCIP_ERR( SCIPcreateExprCos(scip, &exp[expno], exp[expno-1], NULL, NULL), "Error creating cosinus expression cos(exp).");
                break;
 
             default:
@@ -779,13 +804,14 @@ double addNonlinearCon(
 
       case MIN:
       case MAX:
-         mexErrMsgTxt("Max and Min not currently implemented (in this interface).");
-      case SIN:
-      case COS:
+         mexErrMsgTxt("Max and Min not currently implemented (in this interface and SCIP).");
+         break;
       case TAN:
-         mexErrMsgTxt("Trigonometric functions not currently implemented (in SCIP).");
+         mexErrMsgTxt("Tangent function not currently implemented (in SCIP).");
+         break;
       case SIGN:
          mexErrMsgTxt("Sign not currently implemented (in SCIP).");
+         break;
 
       case EXIT:
          break; /* exit switch case */
@@ -1606,13 +1632,17 @@ double addNonlinearCon(
 
       case MIN:
       case MAX:
-         mexErrMsgTxt("Max and Min not currently implemented (in this interface).");
+         mexErrMsgTxt("Max and Min not currently implemented (in this interface and SCIP).");
+         break;
+
       case SIN:
       case COS:
       case TAN:
          mexErrMsgTxt("Trigonometric functions not currently implemented (in SCIP).");
+         break;
       case SIGN:
          mexErrMsgTxt("Sign not currently implemented (in SCIP).");
+         break;
 
       case EXIT:
          break; /* exit switch case */
