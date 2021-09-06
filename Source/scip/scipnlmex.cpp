@@ -487,11 +487,11 @@ double addNonlinearCon(
                /* check for flipped args */
                if ( instr[i] == 1 )
                {
-                  SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &expvars[vari-1], &mone, num, NULL, NULL), "Error creating sub expression (num - exp).");
+                  SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &exp[expno-1], &mone, num, NULL, NULL), "Error creating sub expression (num - exp).");
                }
                else
                {
-                  SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &expvars[vari-1], &one, -num, NULL, NULL), "Error creating sub expression (exp - num).");
+                  SCIP_ERR( SCIPcreateExprSum(scip, &exp[expno], 1, &exp[expno-1], &one, -num, NULL, NULL), "Error creating sub expression (exp - num).");
                }
                break;
 
