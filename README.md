@@ -127,6 +127,10 @@ with appropriate permissions (see Common Problems: Saving path changes).
   environment variables for SCIP and prompts for userinput, if it does
   not find a valid SCIP installation.
 
+- Note that for octave, the SCIP installation paths should not contain
+  spaces. So you might need to rename "SCIPOptSuite 8.0.0", e.g., to
+  "SCIPOptSuite8.0.0".
+
 ### Troubleshooting
 
 #### Compiler
