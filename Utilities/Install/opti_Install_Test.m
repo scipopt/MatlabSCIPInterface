@@ -22,27 +22,9 @@ ok = 1;
 
 fprintf('\nChecking OPTI Toolbox Installation:\n');
 
-%% TEST 1 - Check Main Paths
-%if(verb); fprintf('Checking Paths...                '); end
-%paths = {'@opti','Utilities','Source','opti'};
-%len = length(paths);
-%for i = 1:len
-%    pass = exist(paths{i},'dir');
-%    if(~pass)
-%        fprintf('\nFailed Path Check on %s\n',paths{i});
-%        ok = 0;
-%        return
-%    end
-%end
-%if(verb); fprintf('Ok\n'); end
 
 %% Setup tests to run
-if (strcmp(computer, "PCWIN64"))
-    tests = {'lp','milp','qp','miqp','sdp','misdp','nls',};
-else
-    tests = {'lp','milp','qp','miqp','sdp','misdp','nls','nlp'};
-end
-%tests = {'lp','milp','qp','miqp','sdp','nls','nlp','minlp'};
+tests = {'lp','milp','qp','miqp','sdp','misdp','nls','nlp','minlp'};
 tres = ones(size(tests));
 
 % loop for each test set

@@ -1,15 +1,14 @@
-function matlabSCIPSDPInterface_install(runTests)
+function matlabSCIPSDPInterface_install(runTests, specifyCPP)
 % OPTI Toolbox Installation File
 %
-%  matlabSCIPSDPInterface_install(savePath, runTests)
+%  matlabSCIPSDPInterface_install(runTests, specifyCPP)
 %
-%   savePath: Save the paths added by OPTI to the MATLAB path
 %   runTests: Run the post-installation tests
+%   specifyCPP: Specify a non-default C++-compiler version
 %
 % All arguments are optional and if not supplied, the user will be prompted
 % to enter their selection in the MATLAB Command Window. True is the
 % default option for each argument.
-%
 %
 % Based on code by Jonathan Currie:
 % Copyright (C) 2018 Jonathan Currie (Inverse Problem Limited)
@@ -25,11 +24,11 @@ opts.pp = [];       % cell array of preprocessor options, i.e. -D flags
 opts.expre = '';    % string to insert further commands before source file
 opts.quiet = false; % set mex compilation to quiet
 
-if (strcmp(computer,"PCWIN"))
+if (strcmp(computer, "PCWIN"))
     error("Win32 systems are not supported");
 end
 
-
+% set paths needed for the interface install
 cd(fileparts(which(mfilename)));
 addpath([pwd() '/Source']);
 addpath([pwd() '/Source/scip']);
@@ -38,27 +37,28 @@ addpath([pwd() '/Utilities/Install']);
 addpath([pwd() '/Utilities/opti']);
 addpath([pwd() '/Examples']);
 
+% handle missing input args
+if ~(exist('runTests', 'var')), runTests = []; end
+if ~(exist('specifyCPP', 'var')), specifyCPP = []; end
+
 % MEX interface source files
 src = {'scip/scipsdpmex.cpp scip/scipeventmex.cpp'};
 
-% set path to scip files
+% set path to SCIP files
 scippath = setSCIPPath();
 scipsdppath = setSCIPSDPPath();
 
 % set include files needed for mex-file
 [incscip, installversion] = setIncludeSCIP(scippath);
-incscipsdp = setIncludeSCIPSDP(scipsdppath);
+[incscipsdp, sdpinstallversion] = setIncludeSCIPSDP(scipsdppath);
 inc = [incscip incscipsdp];
 
-% set libraries needed for mex-file
-[lib, opts.expre] = setLibraries(scippath, scipsdppath, opts.expre, installversion);
+% set libraries needed for mex-file & specify the corresponding LDflags
+[lib, opts.expre] = setLibraries(scippath, scipsdppath, opts.expre, installversion, sdpinstallversion);
 
-% set LDflags
-opts.expre = setLDFlags(scippath, scipsdppath, opts.expre, installversion);
-
-% allow for custom CXX Versions for matlab on linux systems
+% allow for custom CXX Versions for Matlab on linux systems
 if strcmp(computer, 'GLNXA64')
-    cxx_custom = setCXXVersion();
+    cxx_custom = setCXXVersion(specifyCPP);
 else
     cxx_custom=[];
 end
@@ -67,8 +67,6 @@ opti_solverMex('scipsdp',src, cxx_custom, inc,lib, opts);
 
 fclose all;
 
-% handle missing input args
-if (nargin < 1), runTests = []; end
 
 cpath = pwd();
 try
@@ -108,18 +106,17 @@ if(strcmpi(in,'y'))
     opti_Install_Test(1);
 end
 
-%Finished
+% finished
 fprintf('\n\nMatlab-SCIPSDP Interface installation complete!\n');
 
 optiSolver;
 
-
 fprintf('To be able to use the Matlab-SDIPSDP Interface after restarting Matlab, you need to save path changes.\n')
+fprintf('or add them manually every time you launch matlab (the script addPaths.m can be used to do so).\n')
 fprintf('Paths can be saved using the command:\n')
 fprintf('     savepath() \n')
-fprintf('If you are unable to save path changes we refer to the ''Common Problems'' section in the readme\n')
-fprintf('or directly to the matlab documentation.\n')
-
+fprintf('If you are unable to save path changes we refer to the ''Common Problems'' section in the README\n')
+fprintf('or directly to the Matlab documentation.\n')
 
 
 
@@ -137,22 +134,22 @@ fprintf('\nSearching for SCIP install ...\n');
 fprintf('Checking environment variables SCIPOPTDIR and SCIPDIR ...\n');
 
 if (~isempty(getenv('SCIPOPTDIR')))
-    
+
     fprintf('SCIPOPTDIR variable found.\n')
     scipoptpath = getenv('SCIPOPTDIR');
-    scipoptpath = strrep(scipoptpath, '\', '\\');
+    scipoptpath = strrep(scipoptpath, '\', '/');
     if(exist([scipoptpath '/scip'], 'dir'))
         scippath = checkScipDir([scipoptpath '/scip']);
     else
-        scippath = checkScipDir(scipoptpath);    
+        scippath = checkScipDir(scipoptpath);
     end
 elseif (~isempty(getenv('SCIPDIR')))
-    
+
     fprintf('SCIPDIR variable found.\n')
     scipdirpath = getenv('SCIPDIR');
-    scipdirpath = strrep(scipdirpath, '\', '\\');
+    scipdirpath = strrep(scipdirpath, '\', '/');
     scippath = checkScipDir(scipdirpath);
-    
+
 end
 
 if (isempty(scippath))
@@ -160,7 +157,7 @@ if (isempty(scippath))
     if (strcmp(yesno,'y'))
         fprintf('Please specify SCIP directory:');
         scipdirpath = uigetdir();
-        scipdirpath = strrep(scipdirpath, '\', '\\');
+        scipdirpath = strrep(scipdirpath, '\', '/');
         scippath = checkScipDir(scipdirpath);
     end
 end
@@ -168,6 +165,7 @@ end
 if(isempty(scippath))
     error('No SCIP installation found!');
 end
+
 
 % This function checks if the specified SCIP directory can be used as a valid SCIP
 % installation.
@@ -179,12 +177,18 @@ if (~(exist([scipdirpath '/src'], 'dir') || exist([scipdirpath '/include'], 'dir
     fprintf(scipdirpath)
     fprintf(''' not recognized.\n')
     scippath = [];
+    if (exist([scipdirpath '/scip'], 'dir') && exist([scipdirpath '/soplex'], 'dir') && exist([scipdirpath '/papilo'], 'dir'))
+        yesno = input('Specified directory seems to contain scipoptsuite root. Use subfolder /scip as scip directory? (y/n)', 's');
+        if (strcmp(yesno,'y'))
+            scippath = [scipdirpath '/scip'];
+        end
+    end
 else
     fprintf(['\nSetting SCIP directory to ''' scipdirpath '''.\n']);
     scippath = scipdirpath;
 end
 
-% The function setSCIPSDPPath determines the path to the SCIP installation and
+% The function setSCIPSDPPath determines the path to the SCIPSDP installation and
 % prompts user input, if no path is found.
 function scipsdppath = setSCIPSDPPath()
 
@@ -198,7 +202,7 @@ fprintf('Checking environment variable SCIPSDPDIR ...\n');
 if (~isempty(getenv('SCIPSDPDIR')))
     fprintf('SCIPSDPDIR variable found.\n')
     scipsdpdirpath = getenv('SCIPSDPDIR');
-    scipsdpdirpath = strrep(scipsdpdirpath, '\', '\\');
+    scipsdpdirpath = strrep(scipsdpdirpath, '\', '/');
     scipsdppath = checkScipSDPDir(scipsdpdirpath);
 end
 if (isempty(scipsdppath))
@@ -206,7 +210,7 @@ if (isempty(scipsdppath))
     if (strcmp(yesno,'y'))
         fprintf('Please specify SCIPSDP directory:');
         scipsdpdirpath = uigetdir();
-        scipsdpdirpath = strrep(scipsdpdirpath, '\', '\\');
+        scipsdpdirpath = strrep(scipsdpdirpath, '\', '/');
         scipsdppath = checkScipSDPDir(scipsdpdirpath);
     end
 end
@@ -234,115 +238,248 @@ end
 % directory and determine the installation method used.
 function [inc, installversion] =  setIncludeSCIP(scippath)
 
-%Include Directories
+% include directories
 if (exist([scippath '/obj'], 'dir'))
     fprintf('\nSCIP build using ''make'' detected.\n');
     installversion = 1;
-    inc = {'scip/Include',['''' scippath '/src'''],['''' scippath '/src/nlpi'''],['''' scippath '/src/blockmemshell''']};
+    inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
 elseif (exist([scippath '/build'], 'dir'))
     fprintf('\nSCIP build using ''cmake'' detected.\n');
     installversion = 2;
-    inc = {'scip/Include',['''' scippath '/src'''],['''' scippath '/src/nlpi'''],['''' scippath '/src/blockmemshell''']};
+    inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
 elseif (exist([scippath '/../build'], 'dir'))
     fprintf('\nSCIPOPT build using ''cmake'' detected.\n');
     installversion = 3;
-    inc = {'scip/Include',['''' scippath '/src'''],['''' scippath '/src/nlpi'''],['''' scippath '/src/blockmemshell''']};
-elseif (exist([scippath '/lib/cmake'], 'dir'))
-    fprintf('\nSCIPOPT install using ''cmake'' detected.\n');
+    inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
+elseif (exist([scippath '/lib'], 'dir'))
+    fprintf('\nSCIP install using ''make install'' or ''.exe'' detected.\n');
     installversion = 4;
-    inc = {'scip/Include',['''' scippath '/include'''],['''' scippath '/include/nlpi'''],['''' scippath '/include/blockmemshell''']};
+    inc = {'scip/Include',[scippath '/include'],[scippath '/include/blockmemshell']};
 end
 
-% The function setIncludeSCIP uses the SCIPSDP path to set the correct include
+% Check if the automatically chosen directory contains the include files and prompt for user input if not
+if ~checkDir(inc(2:length(inc)))
+    yesno = input('\nNo include files found in default location. Would you like to manually specify the location of the SCIP include directory? (y/n)', 's');
+    if strcmp(yesno, 'y')
+        scippath = uigetdir();
+        installversion = 5;
+        inc = {'scip/Include',scippath,[scippath '/blockmemshell']};
+        if ~checkDir(inc(2:length(inc)))
+            error('No include files found in specified directory.');
+        end
+    else
+        error('No include files found in default directory.');
+    end
+end
+
+% Ensure that the specified paths cannot break due to whitespaces
+for i = 2:length(inc)
+    inc{i} = ['''' inc{i} ''''];
+end
+
+% The function setIncludeSCIPSDP uses the SCIPSDP path to set the correct include
 % directory and determine the installation method used.
-function inc =  setIncludeSCIPSDP(scippath)
+function [inc, sdpinstallversion] =  setIncludeSCIPSDP(scipsdppath)
 
 %Include Directories
-if (exist([scippath '/src'], 'dir'))
+if (exist([scipsdppath '/obj'], 'dir'))
     fprintf('SCIPSDP install using ''make'' detected.\n');
-    inc = {'scip/Include',['''' scippath '/src'''],['''' scippath '/src/scipsdp'''],['''' scippath '/src/sdpi''']};
+    sdpinstallversion = 1;
+    inc = {'scip/Include',[scipsdppath '/src'],[scipsdppath '/src/scipsdp'],[scipsdppath '/src/sdpi']};
+elseif (exist([scipsdppath '/build'], 'dir'))
+    fprintf('SCIPSDP build using ''cmake'' detected.\n');
+    sdpinstallversion = 2;
+    inc = {'scip/Include',[scipsdppath '/src'],[scipsdppath '/src/scipsdp'],[scipsdppath '/src/sdpi']};
+end
+
+% Check if the automatically chosen directory contains the include files and prompt for user input if not
+if ~checkDir(inc(2:length(inc)))
+    yesno = input('\nNo include files found in default location. Would you like to manually specify the location of the SCIPSDP include directory? (y/n)', 's');
+    if strcmp(yesno, 'y')
+        scipsdppath = uigetdir();
+        sdpinstallversion = 3;
+        inc = {'scip/Include', scipsdppath, [scipsdppath '/scipsdp'], [scipsdppath '/sdpi']};
+        if ~checkDir(inc(2:length(inc)))
+            error('No include files found in specified directory.');
+        end
+    else
+        error('No include files found in default directory.');
+    end
+end
+
+% Ensure that the specified paths cannot break due to whitespaces
+for i = 2:length(inc)
+    inc{i} = ['''' inc{i} ''''];
+end
+
+% This functions checks if the given path contains all directories we expect
+function [defaultFound] = checkDir(dirLoc)
+
+defaultFound = false;
+if (~(isempty(dirLoc)))
+    defaultFound = true;
+    for i = 1:length(dirLoc)
+        if ~(exist(sprintf('%s', dirLoc{i}), 'dir'))
+            defaultFound = false;
+        end
+    end
 end
 
 % The function setLibraries uses the scippath and the identified
 % installation version to setup the correct libraries for the installation
 % process.
-function [lib, expre] = setLibraries(scippath, scipsdppath, expre, installversion)
+function [lib, expre] = setLibraries(scippath, scipsdppath, expre, installversion, sdpinstallversion)
 
-if (strcmp(computer, "PCWIN64"))
-    lib = ['-L''' scippath '/lib/'''];
-    lib = [lib ' -L''' scipsdppath '/lib/'''];
-else
-    switch(installversion)
-        case 1
-            lib = ['-L''' scippath '/lib/shared/'''];
-        case 2
-            lib = ['-L''' scippath '/build/lib/shared/'''];
-        case 3
-            lib = ['-L''' scippath '/../build/lib/'''];
-        case 4
-            lib = ['-L''' scippath '/lib/'''];
-    end
-    lib = [lib ' -L''' scipsdppath '/lib/shared/'''];
+% lib names [static libraries to link against]
+switch(installversion)
+    case 1
+        scipLibPath = [scippath '/lib/shared/'];
+    case 2
+        scipLibPath = [scippath '/build/lib/'];
+    case 3
+        scipLibPath = [scippath '/../build/lib/'];
+    case {4,5}
+        scipLibPath = [scippath '/lib/'];
 end
-if (exist([scippath '/obj'], 'dir'))
-    lib = sprintf('%s -l%s',lib,'scipsolver');
-elseif (exist([scippath '/build'], 'dir') || exist([scippath '/../build'], 'dir') || exist([scippath '/include'], 'dir'))
-    lib = sprintf('%s -l%s',lib,'scip');
+
+% Check if the automatically chosen directory contains the library folder and prompt for user input if not
+[defaultFound, installversion] = checkScipLib(installversion, scipLibPath);
+if ~defaultFound
+    yesno = input('\nNo lib folder found in default location. Would you like to manually specify the location of the SCIP library? (y/n)', 's');
+    if strcmp(yesno, 'y')
+        scipLibPath = uigetdir();
+        [defaultFound, installversion] = checkScipLib(installversion, scipLibPath);
+        if ~defaultFound
+            error(['No SCIP library found in' scipLibPath])
+        end
+    else
+        error('No SCIP library found in default location.')
+    end
+end
+
+% Format the library link
+if isOctave()
+    scipLibPath = ['"' scipLibPath '"'];
+    scipLibOctPath = ['''' scipLibPath ''''];
+    lib = ['-L' scipLibOctPath];
+else
+    scipLibPath = ['''' scipLibPath ''''];
+    lib = ['-L' scipLibPath];
+end
+
+
+% Append the appropriate library name
+switch(installversion)
+    case 1
+        lib = sprintf('%s -l%s',lib,'scipsolver');
+    case {2,3}
+        lib = sprintf('%s -l%s',lib,'scip');
+    case {4,5}
+        yesno = input('Was the specified SCIP library build using cmake?','s');
+        if strcmp(yesno, 'y')
+            lib = sprintf('%s -l%s',lib,'scip');
+        else
+            lib = sprintf('%s -l%s',lib,'scipsolver');
+        end
+end
+
+switch(sdpinstallversion)
+    case 1
+        scipsdpLibPath = [scipsdppath '/lib/shared/'];
+    case 2
+        scipsdpLibPath = [scipsdppath '/build/lib/'];
+    case 3
+        scipsdpLibPath = [scippath '/lib/'];
+end
+
+% Check if the automatically chosen directory contains the library folder and prompt for user input if not
+[defaultFound, installversion] = checkScipsdpLib(sdpinstallversion, scipsdpLibPath);
+if ~defaultFound
+    yesno = input('\nNo lib folder found in default location. Would you like to manually specify the location of the SCIPSDP library? (y/n)', 's');
+    if strcmp(yesno, 'y')
+        scipsdpLibPath = uigetdir();
+        [defaultFound, ~] = checkScipsdpLib(installversion, scipsdpLibPath);
+        if ~defaultFound
+            error(['No SCIPSDP library found in' scipsdpLibPath])
+        end
+    else
+        error('No SCIPSDP library found in default location.')
+    end
+end
+
+% Format the library link
+if isOctave()
+    scipsdpLibPath = ['"' scipsdpLibPath '"'];
+    scipsdpLibOctPath = ['''' scipsdpLibPath ''''];
+    lib = [lib ' -L' scipsdpLibOctPath];
+else
+    scipsdpLibPath = ['''' scipsdpLibPath ''''];
+    lib = [lib ' -L' scipsdpLibPath];
 end
 lib = sprintf('%s -l%s',lib,'scipsdp');
+
 expre = [expre ' -DNO_CONFIG_HEADER'];
 lib = [lib ' '];
 
-% The function setLDFlags sets the necessary LDFlags based on scippath and
-% installversion.
-function expre = setLDFlags(scippath, scipsdppath, expre, installversion)
-
 switch(computer)
     case 'GLNXA64'
-        switch (installversion)
-            case 1
-                sciplibpath=[ scippath '/lib/shared/'];
-            case 2
-                sciplibpath=[ scippath '/build/lib/'];
-            case 3
-                sciplibpath=[ scippath '/../build/lib/'];
-            case 4
-                sciplibpath=[ scippath '/lib/'];
-        end
-        scipsdplibpath=[ scipsdppath '/lib/shared/'];
-        expre = [expre ' LDFLAGS=''-Wl,-rpath,' sciplibpath ' -Wl,-rpath,' scipsdplibpath ''' '];
-    case 'x86_64-pc-linux-gnu'
-        switch (installversion)
-            case 1
-                sciplibpath=[ scippath '/lib/shared/'];
-            case 2
-                sciplibpath=[ scippath '/build/lib/'];
-            case 3
-                sciplibpath=[ scippath '/../build/lib/'];
-            case 4
-                sciplibpath=[ scippath '/lib/'];
-        end
-        sciplibpath=[ scippath '/lib/shared/'];
-        scipsdplibpath=[ scipsdppath '/lib/shared/'];
-        expre = [expre ' ''-Wl,-rpath,' sciplibpath ' -Wl,-rpath,' scipsdplibpath ''' '];
+        expre = [expre ' LDFLAGS=''-Wl,-rpath,' scipLibPath ' -Wl,-rpath,' scipsdpLibPath ''' '];
+    case {'x86_64-pc-linux-gnu', 'x86_64-w64-mingw32'}
+        expre = [expre ' ''-Wl,-rpath,' scipLibPath ' -Wl,-rpath,' scipsdpLibPath ''' '];
 end
 
+
+
+% This functions checks if the given path contains all directories we expect
+function [defaultFound, installversion] = checkScipLib(installversion, libLoc)
+
+defaultFound = false;
+if installversion == 5
+    yesno = input('\nWas the specified library build using cmake or .exe? (y/n)', 's');
+    if (strcmp(yesno,'n'))
+        installversion = 1;
+    end
+end
+
+if installversion == 1
+    if (exist( [libLoc '/libscipsolver.so'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
+        defaultFound = true;
+    end
+else
+    if (exist([libLoc '/libscip.so'], 'file') || exist([libLoc '/libscip.lib'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
+        defaultFound = true;
+    end
+end
+
+% This functions checks if the given path contains all directories we expect
+function [defaultFound, installversion] = checkScipsdpLib(installversion, libLoc)
+
+defaultFound = false;
+if (exist( [libLoc '/libscipsdp.so'], 'file') || exist([libLoc '/libscipsdp.dll'], 'file'))
+    defaultFound = true;
+end
+    
 % The function setCXXVersion allows users to specify a gcc compiler on linux
 % versions of the installation.
-function cxx_custom = setCXXVersion()
-
+function cxx_custom = setCXXVersion(specifyCPP)
 cxx_custom='';
-
-fprintf('\n');
-yesno = input('Would you like to specify a non-default GNU C++-Compiler (e.g. ''/usr/bin/gcc-8'')? (y/n)', 's');
-if (strcmp(yesno,'y'))
+if specifyCPP
     cxx_custom = input('Please specify which compiler to use: ', 's');
     cxx_custom = [ ' GCC=''' cxx_custom ''' '];
     fprintf(['Setting ''' cxx_custom '''\n'])
-else
-    fprintf('Using default.')
+elseif(isempty(specifyCPP))
+    fprintf('\n');
+    yesno = input('Would you like to specify a non-default GNU C++-Compiler (e.g. ''/usr/bin/gcc-8'')? (y/n)', 's');
+    if (strcmp(yesno,'y'))
+        cxx_custom = input('Please specify which compiler to use: ', 's');
+        cxx_custom = [ ' GCC=''' cxx_custom ''' '];
+        fprintf(['Setting ''' cxx_custom '''\n'])
+    else
+        fprintf('Using default.')
+    end
 end
 
+% This function checks the Matlab version.
 function matlabVerCheck()
 
 fprintf('\n- Checking MATLAB version and operating system ...\n');
@@ -370,35 +507,35 @@ end
 
 switch(mexext)
     case 'mexw32'
-        error('32bit Windows Installations are not supported');
+        error('32bit Windows Installations are not supported.');
     case 'mexw64'
-        fprintf('MATLAB %s 64bit (Windows x64) detected\n',mver.Release);
+        fprintf('MATLAB %s 64bit (Windows x64) detected.\n',mver.Release);
     case 'mexa64'
-        fprintf('MATLAB %s 64bit (Linux x64) detected\n',mver.Release);
+        fprintf('MATLAB %s 64bit (Linux x64) detected.\n',mver.Release);
     otherwise
-        error('The interface could not be compiled for your operating system - sorry!');
+        error('The interface cannot be compiled for your operating system - sorry!');
 end
 
 
+% This function checks release versions.
 function OK = mexFileCheck(localVer)
 
 fprintf('\n- Checking MEX file release information ...\n');
-% check if the current OPTI version matches the mex files
+% check whether the current OPTI version matches the mex files
 [mexFilesOK, mexBuildVer] = checkMexFileVersion(localVer, false);
 if (mexFilesOK == false)
     % one or more mex files are out of date, report to the user
     if (isnan(mexBuildVer))
         fprintf(2,'MEX file is not compatible with this version of the Interface.\n');
     else
-        fprintf(2,'MEX file is not compatible with this version of the Interface (MEX v%.2f vs OPTI v%.2f).\n', mexBuildVer, localVer);
+        fprintf(2,'MEX file is not compatible with this version of the Interface (MEX v%.2f vs Interface v%.2f).\n', mexBuildVer, localVer);
     end
     error('MEX file incompatible.')
 else
-    % all up to date, nothing to check
+    % All up to date, nothing to check
     fprintf('MEX files match interface release.\n');
     OK = true;
 end
-
 
 % This function checks the version of the MEX file.
 function [OK,buildVer] = checkMexFileVersion(localVer, verbose)
@@ -407,7 +544,7 @@ OK = true;
 buildVer = localVer;
 mexFile = optiSolver('onlyscip');
 
-% now search through and compare version info
+% Now search through and compare version info
 for i = 1:length(mexFile)
     if (~any(strcmpi(mexFile{i},{'matlab'})))
         try
@@ -438,23 +575,6 @@ for i = 1:length(mexFile)
             end
         end
     end
-end
-
-
-function r = optiRound(r, n)
-mver = ver('MATLAB');
-vv = regexp(mver.Version,'\.','split');
-needOptiRound = false;
-% MATLAB 2014b  introduced round(r,n), before then approximate it
-if(str2double(vv{1}) < 8)
-    needOptiRound = true;
-elseif (str2double(vv{1}) == 8 && str2double(vv{2}) < 4)
-    needOptiRound = true;
-end
-if (needOptiRound == true)
-    r = round(r*10^n)/(10^n);
-else
-    r = round(r,n);
 end
 
 
