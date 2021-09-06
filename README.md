@@ -158,7 +158,7 @@ compiled with 64 Bit integers. The dynamic shared object loader will
 replace the Lapack/Blas implementation used by IPOPT by this MKL. If
 IPOPT uses a 32 Bit version, this causes a crash.
 
-There does not seem to exist a nice solution, but the following two
+There does not seem to exist a nice and easy solution, but the following two
 might work for you:
 
 - You can tell the system to use the Lapack versions that were used by IPOPT with
@@ -171,8 +171,23 @@ might work for you:
   Matlab that use Lapack will fail (because they do not use MKL
   anymore). In particular, eigenvalue comutations will fail.
 
-- You can build IPOPT and possibly linear algebra packages like Mumps
-  statically. We have not yet been able to fully test whether this works.
+- You can build IPOPT using static versions of Lapack and possibly
+  linear algebra packages like Mumps. We have tested this under Ubuntu
+  16.04 with the 'stable/3.14' version of Ipopt and Ubuntu Mumps
+  packages. Then one needs to build a static version of Ipopt using
+  the static versions of Mumps. This can for example be done as
+  follows:
+
+  './configure --prefix=<your install directory> --with-lapack --with-lapack-lflags="/usr/lib/liblapack.a /usr/lib/libblas.a /usr/lib/gcc/x86_64-linux-gnu/5/libgfortran.so /usr/lib/x86_64-linux-gnu/libm.so" --with-mumps --with-mumps-lflags="/usr/lib/libdmumps_seq.a /usr/lib/libmumps_common_seq.a /usr/lib/libmpiseq_seq.a /usr/lib/libpord_seq.a" --with-mumps-cflags="-I/usr/include/mumps_seq" --enable-static --disable-shared --enable-shared=no --enable-relocatable'
+
+  Clearly, the paths need to be adjusted to your machine and you might
+  want to use the parallel verison of Mumps (remove 'libmpiseq' and
+  remove '_seq' from the library names). Then building SCIP with
+
+  'make IPOPT=true SHARED=true USRLDFLAGS=-Wl,-Bsymbolic'
+
+  creates 'libscipsolver.so' with no outside dependencies to Lapack or Blas.
+
 
 Any further solution options are welcome.
 
