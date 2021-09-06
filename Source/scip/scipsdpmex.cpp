@@ -484,6 +484,19 @@ void mexFunction(
       }
    }
 
+   /* if user has requested print out */
+   if ( printLevel )
+   {
+      /* create message handler */
+      SCIP_MESSAGEHDLR* mexprinter;
+
+      SCIPmessagehdlrCreate(&mexprinter, TRUE, NULL, FALSE, &msginfo, &msginfo, &msginfo, NULL, NULL);
+      SCIP_ERR( SCIPsetMessagehdlr(scip, mexprinter), "Error adding message handler.");
+   }
+
+   /* set verbosity level */
+   SCIP_ERR( SCIPsetIntParam(scip, "display/verblevel", printLevel), "Error setting verblevel.");
+
    if ( printLevel )
    {
       SCIPprintVersion(scip, NULL);
@@ -681,20 +694,7 @@ void mexFunction(
          addSDPConstraint(scip,vars,mxGetCell(prhs[eSDP],i),(int)i);
    }
 
-   /* if user has requested print out */
-   if ( printLevel )
-   {
-      /* create message handler */
-      SCIP_MESSAGEHDLR* mexprinter;
-
-      SCIPmessagehdlrCreate(&mexprinter, TRUE, NULL, FALSE, &msginfo, &msginfo, &msginfo, NULL, NULL);
-      SCIP_ERR( SCIPsetMessagehdlr(scip, mexprinter), "Error adding message handler.");
-   }
-
    /* SCIP_ERR( SCIPwriteOrigProblem(scip, NULL, "cip", FALSE), "error"); */
-
-   /* set verbosity level */
-   SCIP_ERR( SCIPsetIntParam(scip, "display/verblevel", printLevel), "Error setting verblevel.");
 
    /* solve problem */
    SCIP_RETCODE rc = SCIPsolve(scip);
