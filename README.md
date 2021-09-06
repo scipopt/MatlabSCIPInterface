@@ -182,7 +182,7 @@ might work for you:
   the static versions of Mumps. This can for example be done as
   follows:
 
-  './configure --prefix=<your install directory> --with-lapack --with-lapack-lflags="/usr/lib/liblapack.a /usr/lib/libblas.a /usr/lib/gcc/x86_64-linux-gnu/5/libgfortran.so /usr/lib/x86_64-linux-gnu/libm.so" --with-mumps --with-mumps-lflags="/usr/lib/libdmumps_seq.a /usr/lib/libmumps_common_seq.a /usr/lib/libmpiseq_seq.a /usr/lib/libpord_seq.a" --with-mumps-cflags="-I/usr/include/mumps_seq" --enable-static --disable-shared --enable-shared=no --enable-relocatable'
+  `./configure --prefix=<your install directory> --with-lapack --with-lapack-lflags="/usr/lib/liblapack.a /usr/lib/libblas.a /usr/lib/gcc/x86_64-linux-gnu/5/libgfortran.so /usr/lib/x86_64-linux-gnu/libm.so" --with-mumps --with-mumps-lflags="/usr/lib/libdmumps_seq.a /usr/lib/libmumps_common_seq.a /usr/lib/libmpiseq_seq.a /usr/lib/libpord_seq.a" --with-mumps-cflags="-I/usr/include/mumps_seq" --enable-static --disable-shared --enable-shared=no --enable-relocatable`
 
   Clearly, the paths need to be adjusted to your machine and you might
   want to use the parallel verison of Mumps (remove 'libmpiseq' and
