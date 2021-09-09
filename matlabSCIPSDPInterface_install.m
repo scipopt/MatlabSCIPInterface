@@ -375,7 +375,7 @@ switch(installversion)
     case {2,3}
         lib = sprintf('%s -l%s',lib,'scip');
     case {4,5}
-        yesno = input('Was the specified SCIP library build using cmake?','s');
+        yesno = input('Was the specified SCIP library build using cmake? (y/n)','s');
         if strcmp(yesno, 'y')
             lib = sprintf('%s -l%s',lib,'scip');
         else
@@ -435,7 +435,7 @@ function [defaultFound, installversion] = checkScipLib(installversion, libLoc)
 
 defaultFound = false;
 if installversion == 5
-    yesno = input('\nWas the specified library build using cmake or .exe? (y/n)', 's');
+    yesno = input('\nWas the specified library build using cmake? (y/n)', 's');
     if (strcmp(yesno,'n'))
         installversion = 1;
     end
