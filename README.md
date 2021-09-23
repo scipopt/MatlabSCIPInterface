@@ -3,7 +3,7 @@
 This repository provides an interface of Matlab/Octave to
 [SCIP](https://www.scipopt.org/) and [SCIPSDP](http://www.opt.tu-darmstadt.de/scipsdp/).
 
-This interface is based on the OPTI Toolbox by Jonathan Currrie, see:
+This interface is based on the OPTI Toolbox by Jonathan Currie, see:
 
 https://github.com/jonathancurrie/OPTI
 
@@ -289,7 +289,7 @@ has its own academic license.
 
 ## Authors
 
-This interface is based on the OPTI Toolbox by Jonathan Currrie. He
+This interface is based on the OPTI Toolbox by Jonathan Currie. He
 wrote most of the Matlab-code. The interface has been adpated and
 extended by Nicolai Simon and Marc Pfetsch, TU Darmstadt.
 
