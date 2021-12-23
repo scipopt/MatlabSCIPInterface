@@ -120,6 +120,10 @@ with appropriate permissions (see Common Problems: Saving path changes).
 
   Alternatively you can specify the SCIP directory during the
   installation process.
+  
+- Ensure that the path to the SCIP binaries (`pathToSCIP\bin`) is added
+  to the windows or user PATH-variable, either manually or by choosing 
+  the corresponding action in the SCIPOptSuite Installer
 
 - To start the installation process, change to the "opti" directory in
   Matlab/Octave and run the file `matlabSCIPInterface_install.m` in
