@@ -58,7 +58,6 @@ lb = [0 0 0]';
 ub = [40 inf inf]';
 lp_tprob{i} = optiprob('grad',f,'ineq',A,b,'eq',Aeq,beq,'bounds',lb,ub);
 lp_sval(i) = -97.5;
-i = i + 1;
 
 % LP Clean Up + Save
 clear f A b e Aeq beq lb ub i no
@@ -168,7 +167,6 @@ lb = [0;0];
 ub = [10;10];
 qp_tprob{i} = optiprob('qp',H,f,'eq',Aeq,beq,'ineq',A,b,'bounds',lb,ub);
 qp_sval(i) = -6.41379310344827;
-i = i + 1;
 
 clear H f A b e Aeq beq lb ub i no
 save 'Utilities/Install/qp_test_results.mat'
@@ -197,7 +195,6 @@ A = [1 1 1;3 -2 -3; 1 -3 2];
 b = [1;1;1];
 miqp_tprob{i} = optiprob('hess',H,'grad',f,'ineq',A,b,'int','CIC');
 miqp_sval(i) = -2.75;
-i = i + 1;
 
 clear H f A b e Aeq beq lb ub i no
 save 'Utilities/Install/miqp_test_results.mat'
@@ -312,7 +309,6 @@ sdp = sparse([C(:) A0(:) A1(:) A2(:)]);
 xtype = 'III';
 misdp_tprob{i} = optiprob('f',f,'lin',A,lhs,rhs,'sdcone',sdp,'int',xtype);
 misdp_sval(i) = -8;
-i = i + 1;
 sdp = [];
 
 clear f C A0 A1 A2 sdp lhs rhs i no
@@ -329,16 +325,16 @@ i = 1;
 % NLS 1
 fun = @(x) [10*(x(2)-x(1)^2); 1 - x(1)];
 ydata = zeros(2,1);
-x0 = [-1.2;1];
-nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'x0',x0);
+xval = [-1.2;1];
+nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'xval',xval);
 nls_sval(i) = 0;
 i = i + 1;
 
 % NLS 2
 fun = @(x) [1.5 - x(1)*(1 - x(2)); 2.25 - x(1)*(1 - x(2)^2); 2.625 - x(1)*(1 - x(2)^3) ];
 ydata = zeros(3,1);
-x0 = [1;1];
-nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'x0',x0);
+xval = [1;1];
+nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'xval',xval);
 nls_sval(i) = 0;
 i = i + 1;
 
@@ -346,8 +342,8 @@ i = i + 1;
 fun = @(x) [1e4*x(1)*x(2) - 1;
             exp(-x(1)) + exp(-x(2)) - 1.0001];
 ydata = zeros(2,1);
-x0 = [0;1];
-nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'x0',x0);
+xval = [0;1];
+nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'xval',xval);
 nls_sval(i) = 0;
 i = i + 1;
 
@@ -355,8 +351,8 @@ i = i + 1;
 ii = (1:10)';
 fun = @(x) 2 + 2*ii - (exp(0.2578*ii) + exp(0.2578*ii));
 ydata = zeros(10,1);
-x0 = [0.3;0.4];
-nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'x0',x0);
+xval = [0.3;0.4];
+nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'xval',xval);
 nls_sval(i) = 124.36226865;
 i = i + 1;
 
@@ -367,12 +363,12 @@ fun = @(x) [10*(x(2)-x(1)^2);
             1 - x(3);
             sqrt(10)*(x(2) + x(4) - 2);
             10^(-0.5)*(x(2)-x(4))];
-x0 = [3;-1;-3;-1];
+xval = [3;-1;-3;-1];
 ydata = zeros(6,1);
-nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'x0',x0);
+nls_tprob{i} = optiprob('fun',fun,'ydata',ydata,'xval',xval);
 nls_sval(i) = 0;
 
-clear fun ydata x0 ii i no
+clear fun ydata xval ii i no
 save 'Utilities/Install/nls_test_results.mat'
 
 %% Nonlinear Programming
@@ -388,8 +384,8 @@ fun = @(x) 100*(x(2) - x(1)^2)^2 + (1 - x(1))^2;
 grad = @(x)[[2*x(1)-400*x(1)*(-x(1)^2+x(2))-2];[-200*x(1)^2+200*x(2)]];
 lb = [-inf; -1.5];
 ub = [100; 100];
-x0 = [-2; 1];
-nlp_tprob{i} = optiprob('obj',fun,'grad',grad,'bounds',lb,ub,'x0',x0);
+xval = [-2; 1];
+nlp_tprob{i} = optiprob('obj',fun,'grad',grad,'bounds',lb,ub,'xval',xval);
 nlp_sval(i) = 0;
 i = i + 1;
 
@@ -398,8 +394,8 @@ fun = @(x) 1/3*(x(1) + 1)^3 + x(2);
 grad = @(x)[[(x(1)+1)^2];[1]];
 lb = [1;0];
 ub = [100;100];
-x0 = [1.125;0.125];
-nlp_tprob{i} = optiprob('obj',fun,'grad',grad,'bounds',lb,ub,'x0',x0);
+xval = [1.125;0.125];
+nlp_tprob{i} = optiprob('obj',fun,'grad',grad,'bounds',lb,ub,'xval',xval);
 nlp_sval(i) = 8/3;
 i = i + 1;
 
@@ -409,12 +405,12 @@ i = i + 1;
 %grad = @(x)[[2*x(1)-2*x(2)+cos(x(1)+x(2))-1.5];[2*x(2)-2*x(1)+cos(x(1)+x(2))+2.5]];
 %lb = [-1.5;-3];
 %ub = [4;3];
-%x0 = [0;0];
-%nlp_tprob{i} = optiprob('obj',fun,'grad',grad,'bounds',lb,ub,'x0',x0);
+%xval = [0;0];
+%nlp_tprob{i} = optiprob('obj',fun,'grad',grad,'bounds',lb,ub,'xval',xval);
 %nlp_sval(i) = -0.5*sqrt(3)-pi/3;
 %i = i + 1;
 
-clear fun grad lb ub x0 i no
+clear fun grad lb ub xval i no
 save 'Utilities/Install/nlp_test_results.mat'
 
 %% MI Nonlinear Programming
@@ -430,10 +426,9 @@ obj = @(x) (x(1) - 5)^2 + x(2)^2 - 25;
 nlcon = @(x) -x(1)^2 + x(2)-0.5;
 nlrhs = 0;
 nle = 1;
-x0 = [4;0];
-minlp_tprob{i} = optiprob('obj',obj,'ndec',2,'ivars',[1 2],'nlmix',nlcon,nlrhs,nle,'x0',x0);
+xval = [4;0];
+minlp_tprob{i} = optiprob('obj',obj,'ndec',2,'ivars',[1 2],'nlmix',nlcon,nlrhs,nle,'xval',xval);
 minlp_sval(i) = -5;
-i = i + 1;
 
-clear obj A b nlcon nlrhs nle lb ub x0 i no
+clear obj A b nlcon nlrhs nle lb ub xval i no
 save 'Utilities/Install/minlp_test_results.mat'

@@ -40,7 +40,8 @@ enum
    eUB    = 5,           /**< ub: upper bounds */
    eSDP   = 6,           /**< SDP constraints */
    eXTYPE = 7,           /**< xtype: variable types */
-   eOPTS  = 8            /**< opts: SCIP options */
+   eX0    = 8,           /**< x0: primal solution */
+   eOPTS  = 9            /**< opts: SCIP options */
 };
 
 /* message buffer size */
@@ -158,6 +159,8 @@ void checkInputs(
       if ( nrhs > eXTYPE && ! mxIsEmpty(prhs[eXTYPE]) && mxGetNumberOfElements(prhs[eXTYPE]) != ndec )
          mexErrMsgTxt("xtype has incompatible dimensions");
    }
+   if ( ! mxIsEmpty(prhs[eX0]) && mxGetN(prhs[eX0]) != ndec )
+      mexErrMsgTxt("x0 has incompatible dimensions.");
 }
 
 /** get long integer option */
@@ -386,6 +389,7 @@ void mexFunction(
    double* gap;
    double* pbound;
    double* dbound;
+   double* x0 = NULL;
    const char* fnames[4] = {"BBnodes", "BBgap", "PrimalBound", "DualBound"};
 
    /* common options */
@@ -647,7 +651,7 @@ void mexFunction(
       SCIP_ERR( SCIPaddVar(scip, objb), "Error adding objective bias variable.");
    }
 
-      /* add linear constraints (if they exist) */
+   /* add linear constraints (if they exist) */
    if ( ncon )
    {
       /* allocate memory for all constraints (we create them all now, as we have to add coefficients in column order) */
@@ -696,47 +700,68 @@ void mexFunction(
 
    /* SCIP_ERR( SCIPwriteOrigProblem(scip, NULL, "cip", FALSE), "error"); */
 
-   /* solve problem */
-   SCIP_RETCODE rc = SCIPsolve(scip);
-
-   if ( rc != SCIP_OKAY )
+   /* process primal solution (if it exits) */
+   if ( nrhs > eX0 && ! mxIsEmpty(prhs[eX0]) )
    {
-      /* clean up general SCIP memory (if possible) */
-      SCIPfree(&scip);
+      SCIP_SOL* sol;
+      SCIP_Bool stored;
 
-      /* display error */
-      sprintf(msgbuf, "Error Solving SCIP-SDP Problem, Error: %s (Code: %d)", scipErrCode(rc), rc);
-      mexErrMsgTxt(msgbuf);
-   }
+      x0 = mxGetPr(prhs[eX0]);
+      assert( x0 != NULL );
+      SCIP_ERR( SCIPcreateSol(scip, &sol, NULL), "Error creating empty solution");
 
-   /* assign return arguments */
-   if ( SCIPgetNSols(scip) > 0 )
-   {
-      SCIP_SOL* scipbestsol = SCIPgetBestSol(scip);
-
-      /* assign x */
       for (i = 0; i < ndec; i++)
-         x[i] = SCIPgetSolVal(scip, scipbestsol, vars[i]);
-
-      /* assign fval */
-      *fval = SCIPgetSolOrigObj(scip, scipbestsol);
-
-      /* get solve statistics */
-      *nodes = (double)SCIPgetNTotalNodes(scip);
-      *gap = SCIPgetGap(scip);
-      *pbound = SCIPgetPrimalbound(scip);
-      *dbound = SCIPgetDualbound(scip);
+      {
+         SCIP_ERR( SCIPsetSolVal(scip, sol, vars[i], x0[i]), "Error creating setting solution value");
+      }
+      SCIP_ERR( SCIPaddSolFree(scip, &sol, &stored), "Error adding solution" );
    }
-   else /* no solution found */
+
+   /* solve problem if not in writing mode */
+   if ( strlen(probfile) == 0 )
    {
-      *fval = std::numeric_limits<double>::quiet_NaN();
-      *gap = std::numeric_limits<double>::infinity();
-      *pbound = std::numeric_limits<double>::quiet_NaN();
-      *dbound = std::numeric_limits<double>::quiet_NaN();
-   }
+      /* solve problem */
+      SCIP_RETCODE rc = SCIPsolve(scip);
 
-   /* get solution status */
-   *exitflag = (double)SCIPgetStatus(scip);
+      if ( rc != SCIP_OKAY )
+      {
+         /* clean up general SCIP memory (if possible) */
+         SCIPfree(&scip);
+
+         /* display error */
+         sprintf(msgbuf, "Error Solving SCIP-SDP Problem, Error: %s (Code: %d)", scipErrCode(rc), rc);
+         mexErrMsgTxt(msgbuf);
+      }
+
+      /* assign return arguments */
+      if ( SCIPgetNSols(scip) > 0 )
+      {
+         SCIP_SOL* scipbestsol = SCIPgetBestSol(scip);
+
+         /* assign x */
+         for (i = 0; i < ndec; i++)
+            x[i] = SCIPgetSolVal(scip, scipbestsol, vars[i]);
+
+         /* assign fval */
+         *fval = SCIPgetSolOrigObj(scip, scipbestsol);
+
+         /* get solve statistics */
+         *nodes = (double)SCIPgetNTotalNodes(scip);
+         *gap = SCIPgetGap(scip);
+         *pbound = SCIPgetPrimalbound(scip);
+         *dbound = SCIPgetDualbound(scip);
+      }
+      else /* no solution found */
+      {
+         *fval = std::numeric_limits<double>::quiet_NaN();
+         *gap = std::numeric_limits<double>::infinity();
+         *pbound = std::numeric_limits<double>::quiet_NaN();
+         *dbound = std::numeric_limits<double>::quiet_NaN();
+      }
+
+      /* get solution status */
+      *exitflag = (double)SCIPgetStatus(scip);
+   }
 
    /* clean up memory from MATLAB mode */
    mxFree(xtype);

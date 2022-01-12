@@ -25,7 +25,7 @@ classdef opti < handle
 %   optObj = opti('f',f,'ineq',A,b,'bounds',lb,ub)
 %
 %   2) Bounded NLP
-%   optObj = opti('obj',obj,'bounds',lb,ub,'x0',x0)
+%   optObj = opti('obj',obj,'bounds',lb,ub,'xval',xval)
 %
 %   3) Option Setting
 %   optObj = opti('obj',obj,'options',optiset('solver','nomad'))
@@ -68,7 +68,7 @@ classdef opti < handle
         end
 
         %-- Solve --%
-        function [x,fval,exitflag,info] = solve(optObj,x0)
+        function [x,fval,exitflag,info] = solve(optObj,x0,xval)
             %SOLVE  Solve OPTI Optimization Problem
             %
             %   [x,fval,exitflag,info] = solve(optObj) solves the optimization
@@ -76,9 +76,9 @@ classdef opti < handle
             %   the function value at x in fval, an exitflag and information in
             %   info regarding the solution.
             %
-            %   [x,fval,exitflag,info] = solve(optObj,x0) solves the optimization
-            %   problem using x0 as the initial guess. If x0 is specified within
-            %   opti() / optiprob(), this x0 will take precedence.
+            %   [x,fval,exitflag,info] = solve(optObj,x0,xval) solves the optimization
+            %   problem using x0 as primal solution and xval as the initial guess. If xval is specified within
+            %   opti() / optiprob(), this xval will take precedence.
             %
             %   ExitFlags:
             %        1 - Converged / Terminated Successfully
@@ -100,18 +100,23 @@ classdef opti < handle
                 error('You cannot solve an empty OPTI object!');
             end
 
-            %Get Optional x0
-            if(nargin < 2 || isempty(x0))
-                if(~isempty(optObj.prob.x0) && ~any(isnan(optObj.prob.x0)))
-                    x0 = optObj.prob.x0;
+            %get optional xval
+            if(nargin < 2 || isempty(xval))
+                if(~isempty(optObj.prob.xval) && ~any(isnan(optObj.prob.xval)))
+                    xval = optObj.prob.xval;
                 else
-                    x0 = [];
+                    xval = [];
                 end
             else
-                optObj.prob.x0 = x0; %save into class
+                optObj.prob.xval = xval; %save into class
             end
+
+            if(nargin < 2 || isempty(x0))
+                x0 = [];
+            end
+
             %Solve Problem
-            [x,fval,exitflag,info] = solveOpti(optObj,x0);
+            [x,fval,exitflag,info] = solveOpti(optObj,x0,xval);
             %Save solve info
             optObj.sol = x;
             optObj.obj = fval;
@@ -119,7 +124,7 @@ classdef opti < handle
             optObj.info = info;
 
             %Update ndec if empty
-            if(isempty(optObj.prob.sizes.ndec)), optObj.prob.sizes.ndec = length(x0); end
+            if(isempty(optObj.prob.sizes.ndec)), optObj.prob.sizes.ndec = length(xval); end
             %Check for maximization
             if(optObj.prob.sense==-1), fval = -fval; end
 
@@ -134,7 +139,7 @@ classdef opti < handle
 
 
         %-- Multi-Solve --%
-        function [x,fval,exitflag,info] = multisolve(optObj,x0,divisions,penalty,solveAll)
+        function [x,fval,exitflag,info] = multisolve(optObj,xval,divisions,penalty,solveAll)
             %MULTISOLVE  Solve OPTI Global Optimization Problem with Multi-Start (beta)
             %
             %   x = multisolve(optObj) performs a search of the
@@ -142,20 +147,20 @@ classdef opti < handle
             %   at the best solution guesses found. The best optimized
             %   solution will be returned in x.
             %
-            %   x = multisolve(optObj,x0) also includes a more detailed
-            %   search around the initial guess x0.
+            %   x = multisolve(optObj,xval) also includes a more detailed
+            %   search around the initial guess xval.
             %
-            %   x = multisolve(optObj,x0,divisions) determines the number
+            %   x = multisolve(optObj,xval,divisions) determines the number
             %   of divisions each variable is searched within. The default
             %   will attempt to search around 100 points. For ND problems,
             %   a division of 10 will result in 10^N search points.
             %
-            %   x = multisolve(optObj,x0,divisions,penalty) specifies the
+            %   x = multisolve(optObj,xval,divisions,penalty) specifies the
             %   penalty factor applied to constraint violations. The
             %   default is 1e4. Larger values will be required for
             %   objective functions that exceed this value.
             %
-            %   x = multisolve(optObj,x0,divisions,penalty,solveAll)
+            %   x = multisolve(optObj,xval,divisions,penalty,solveAll)
             %   specifies at each search point an optimization is also
             %   performed. Significantly longer to execute, but ensures the
             %   search space is well covered!
@@ -170,19 +175,19 @@ classdef opti < handle
             if(nargin < 4), penalty = []; end
             if(nargin < 3), divisions = []; end
 
-            %Get Optional x0
-            if(nargin < 2 || isempty(x0))
-                if(~isempty(optObj.prob.x0) && ~any(isnan(optObj.prob.x0)))
-                    x0 = optObj.prob.x0;
+            %Get Optional xval
+            if(nargin < 2 || isempty(xval))
+                if(~isempty(optObj.prob.xval) && ~any(isnan(optObj.prob.xval)))
+                    xval = optObj.prob.xval;
                 else
-                    x0 = [];
+                    xval = [];
                 end
             else
-                optObj.prob.x0 = x0; %save into class
+                optObj.prob.xval = xval; %save into class
             end
 
             %Solve Problem
-            [x,fval,exitflag,info] = multiSolveOpti(optObj,x0,divisions,penalty,solveAll);
+            [x,fval,exitflag,info] = multiSolveOpti(optObj,xval,divisions,penalty,solveAll);
             %Save solve info into Object
             optObj.sol = x;
             optObj.obj = fval;
@@ -190,7 +195,7 @@ classdef opti < handle
             optObj.info = info;
 
             %Update ndec if empty
-            if(isempty(optObj.prob.sizes.ndec)), optObj.prob.sizes.ndec = length(x0); end
+            if(isempty(optObj.prob.sizes.ndec)), optObj.prob.sizes.ndec = length(xval); end
             %Check for maximization
             if(optObj.prob.sense==-1), fval = -fval; end
         end

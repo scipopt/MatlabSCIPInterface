@@ -71,7 +71,7 @@ double addNonlinearCon(
    size_t                no_instr,           /**< number of instructions */
    double                lhs,                /**< left hand side */
    double                rhs,                /**< right hand side */
-   double*               x0,                 /**< initial guess for variables */
+   double*               xval,               /**< validation point for variables */
    size_t                nlno,               /**< index of nonlinear constraint */
    bool                  isObj               /**< is this the objective function */
    )
@@ -828,11 +828,11 @@ double addNonlinearCon(
 #endif
 
    /* 'Validate' the constraint if initial guess supplied */
-   if ( x0 != NULL )
+   if ( xval != NULL )
    {
       SCIP_SOL* sol;
       SCIP_ERR( SCIPcreateSol(scip, &sol, NULL), "Error creating solution.\n");
-      SCIP_ERR( SCIPsetSolVals(scip, sol, nvars, vars, x0), "Error setting solution values.\n");
+      SCIP_ERR( SCIPsetSolVals(scip, sol, nvars, vars, xval), "Error setting solution values.\n");
 
       SCIP_ERR( SCIPevalExpr(scip, exp[expno], sol, 0), "Error evaluating expression.\n");
       fval = SCIPexprGetEvalValue(exp[expno]);
@@ -886,7 +886,7 @@ double addNonlinearCon(
    size_t                no_instr,           /**< number of instructions */
    double                lhs,                /**< left hand side */
    double                rhs,                /**< right hand side */
-   double*               x0,                 /**< initial guess for variables */
+   double*               xval,               /**< validation solution for variables */
    size_t                nlno,               /**< index of nonlinear constraint */
    bool                  isObj               /**< is this the objective function */
    )
@@ -918,7 +918,7 @@ double addNonlinearCon(
    int psavprolst = -1;            /* position in list */
    double num = 0;                 /* to save constants passed */
    double fval = 0;                /* evaluation value */
-   double *lx0 = NULL;             /* local x0 with just variables present in expression copied (and correct order) */
+   double *lxval = NULL;           /* local xval with just variables present in expression copied (and correct order) */
    double one = 1.0;
    double mone = -1.0;
    double zero = 0.0;
@@ -1672,19 +1672,19 @@ double addNonlinearCon(
    SCIP_ERR( SCIPexprtreeSetVars(exprtree, no_unq, unqvars), "Error setting expression tree var.");
 
    /* 'Validate' the constraint if initial guess supplied */
-   if ( x0 != NULL )
+   if ( xval != NULL )
    {
-      /* copy in x0 variables used in the expression */
-      lx0 = (double*)mxCalloc(no_var, sizeof(double));
+      /* copy in xval variables used in the expression */
+      lxval = (double*)mxCalloc(no_var, sizeof(double));
 
       /* note variables appear in the same order as found in expression */
       for (i = 0; i < no_unq; i++)
-         lx0[i] = x0[unqind[i]];
+         lxval[i] = xval[unqind[i]];
 
-      SCIPexprtreeEval(exprtree, lx0, &fval);
+      SCIPexprtreeEval(exprtree, lxval, &fval);
 
       /* free memory */
-      mxFree(lx0);
+      mxFree(lxval);
    }
 
    /* create the nonlinear constraint, add it, then release it */

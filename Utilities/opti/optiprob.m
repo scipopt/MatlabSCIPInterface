@@ -25,15 +25,15 @@ end
 
 %Defaults
 Names = {'Name';'f';'H';'Hstr';'fun';'sense';'objbias';'A';'b';'Aeq';'beq';'rl';'ru';'lb';'ub';'Q';'l';'qrl';'qru';'sdcone';...
-         'nlcon';'nljac';'nljacstr';'nlrhs';'nle';'cl';'cu';'int';'sos';'xdata';'ydata';'weighting';'x0';'probtype';'solver';'path';'opts';...
+         'nlcon';'nljac';'nljacstr';'nlrhs';'nle';'cl';'cu';'int';'sos';'xdata';'ydata';'weighting';'xval';'probtype';'solver';'path';'opts';...
          'ode';'odez0'};
 Defaults = {'OPTI Problem';[];[];[];[];1;0.0;[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[];[]};         
-altPairs = {{'grad','f'},{'c','f'},{'obj','fun'},{'hess','H'},{'ineq','A','b'},{'lin','Ar','rl','ru'},{'ndec','x0'},...
+altPairs = {{'grad','f'},{'c','f'},{'obj','fun'},{'hess','H'},{'ineq','A','b'},{'lin','Ar','rl','ru'},{'ndec','xval'},...
             {'jac','nljac'},{'jacstr','nljacstr'},{'hessstr','Hstr'},...
             {'eq','Aeq','beq'},{'bounds','lb','ub'},{'mix','A','b','e'},{'qp','H','f'},{'sdp','sdcone'},{'sedumi','sdcone'},...
             {'ctype','int'},{'vtype','int'},{'xtype','int'},{'ivars','int'},{'nlmix','nlcon','nlrhs','nle'},{'nl','nlcon','cl','cu'},...
             {'qc','q','l','qru'},{'qcrow','q','l','qrl','qru'},{'sle','A','b'},{'data','xdata','ydata'},...
-            {'weights','weighting'},{'options','opts'},{'problemtype','probtype'},{'odefun','ode'},{'z0','odez0'},{'theta0','x0'},{'nleq','nlcon'}};
+            {'weights','weighting'},{'options','opts'},{'problemtype','probtype'},{'odefun','ode'},{'z0','odez0'},{'theta0','xval'},{'nleq','nlcon'}};
 
 %Collect Sizes and lowercase matches         
 m = size(Names,1); numberargs = nargin;
@@ -80,8 +80,8 @@ try
                 %Check for special cases
                 switch(lower(arg))
                     case 'ndec'
-                        if(isempty(prob.x0))
-                            prob.x0 = NaN(varargin{i+1},1); %don't need this if we have x0! [bugfix 20/6/13]
+                        if(isempty(prob.xval))
+                            prob.xval = NaN(varargin{i+1},1); %don't need this if we have xval! [bugfix 20/6/13]
                         end
                         i = i + 1;
                         expectval = 0;
@@ -281,7 +281,7 @@ switch lower(field)
     case 'objbias'
         err = opticheckval.checkScalarDbl(value,field);
     %Double Vector
-    case {'b','beq','rl','ru','lb','ub','nlrhs','nle','cl','cu','x0','sedumi b','odez0'} 
+    case {'b','beq','rl','ru','lb','ub','nlrhs','nle','cl','cu','xval','sedumi b','odez0'}
         err = opticheckval.checkDblVec(value,field);
     %Double Vector (but may be sparse)
     case 'sedumi c'
@@ -385,7 +385,7 @@ fprintf('         weights: [ Data Fitting Problem Weights on Y Data ] \n');
 
 fprintf('\n OTHER FIELDS:\n');
 fprintf('            Name: [ Problem Name ] \n');
-fprintf('              x0: [ Initial Solution Guess ] \n');
+fprintf('            xval: [ Solution Validation Point ] \n');
 fprintf('        probtype: [ Optional string containing the problem type to be solved ] \n');
 
 fprintf('\n DYNAMIC OPTIMIZATION FIELDS:\n');

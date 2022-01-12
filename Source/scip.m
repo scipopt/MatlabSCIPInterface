@@ -3,7 +3,7 @@
 % SCIP uses the Solving Constraint Integer Programs library, available
 % from: http://scip.zib.de/scip.shtml
 %
-%   [x,fval,exitflag,stats] = scip(H, f, A, rl, ru, lb, ub, xtype, sos, qc, nl, opts)
+%   [x,fval,exitflag,stats] = scip(H, f, A, rl, ru, lb, ub, xtype, sos, qc, nl, x0, opts)
 %
 %   Input arguments*:
 %       H - quadratic objective matrix (sparse, optional [NOT TRIL / TRIU])
@@ -17,6 +17,7 @@
 %       sos - SOS structure with fields type, index and weight (see below)
 %       qc - Quadratic Constraints structure with fields Q, l, qrl and qru (see below)
 %       nl - Nonlinear Objective and Constraints structure (see below)
+%       x0 - primal solution
 %       opts - solver options (see below)
 %
 %   Return arguments:

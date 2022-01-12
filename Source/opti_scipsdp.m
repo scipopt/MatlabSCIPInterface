@@ -1,4 +1,4 @@
-function [x,fval,exitflag,info] = opti_scipsdp(f,A,lhs,rhs,lb,ub,sdp,xtype,opts)
+function [x,fval,exitflag,info] = opti_scipsdp(f,A,lhs,rhs,lb,ub,sdp,xtype,x0,opts)
 %OPTI_SCIPSDP Solve a MISDP using SCIP-SDP
 %
 %   min f'*x      subject to:     lhs <= A*x <= rhs
@@ -6,12 +6,13 @@ function [x,fval,exitflag,info] = opti_scipsdp(f,A,lhs,rhs,lb,ub,sdp,xtype,opts)
 %                                 for i = 1..n: xi in Z
 %                                 for j = 1..m: xj in {0,1}
 %
-%   x = opti_scip(f,A,lhs,rhs,lb,ub,sdp,xtype,sos,opts) solves an
+%   x = opti_scipsdp(f,A,lhs,rhs,lb,ub,sdp,xtype,sos,opts,x0) solves an
 %   SDP/MISDP where f is the objective vector, A, lhs, rhs are the
 %   linear constraints, lb, ub are the variable bounds, sdp are SDP
-%   constraints, and xtype are variables types ('C', 'I', 'B').
+%   constraints, and xtype are variables types ('C', 'I', 'B'). The
+%   point x0 provides a primal solution.
 %
-%   [x,fval,exitflag,info] = opti_scip(...) returns an optimal
+%   [x,fval,exitflag,info] = opti_scipsdp(...) returns an optimal
 %   solution x, the objective value fval, a solver exitflag, and an
 %   information structure.
 %
@@ -24,7 +25,8 @@ function [x,fval,exitflag,info] = opti_scipsdp(f,A,lhs,rhs,lb,ub,sdp,xtype,opts)
 t = tic;
 
 % handle missing arguments
-if nargin < 9, opts = optiset; end
+if nargin < 10, opts = optiset; end
+if nargin < 9, x0 = []; end
 if nargin < 8, xtype = repmat('C',size(f)); end
 if nargin < 7, sdp = []; end
 if nargin < 6, ub = []; end
@@ -67,7 +69,7 @@ end
 sopts.optiver = optiver;
 
 % MEX contains error checking
-[x,fval,exitflag,stats] = scipsdp(f, A, lhs, rhs, lb, ub, sdp, xtype, sopts);
+[x,fval,exitflag,stats] = scipsdp(f, A, lhs, rhs, lb, ub, sdp, xtype, x0, sopts);
 
 % assign outputs
 info.BBNodes = stats.BBnodes;
@@ -79,7 +81,6 @@ info.Algorithm = 'SCIP-SDP: SDP-based Branch and Bound';
 
 % process return code
 [info.Status,exitflag] = scipRetCode(exitflag);
-
 
 % return display level
 function print_level = dispLevel(lev)

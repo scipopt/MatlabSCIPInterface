@@ -37,7 +37,8 @@ enum
    eSOS   = 8,           /**< SOS: SOS constraints */
    eQC    = 9,           /**< Q: quadratic constraint matrix */
    eNLCON = 10,          /**< nlcon: nonlinear constraints */
-   eOPTS  = 11           /**< opts: SCIP options */
+   eX0    = 11,          /**< x0: primal solution */
+   eOPTS  = 12           /**< opts: SCIP options */
 };
 
 /* message buffer size */
@@ -117,7 +118,7 @@ void checkInputs(
    if ( nrhs > eOPTS && ! mxIsEmpty(prhs[eOPTS]) && ! mxIsStruct(prhs[eOPTS]) )
       mexErrMsgTxt("The options argument must be a structure!");
 
-   /* get Sizes */
+   /* get sizes */
    ndec = mxGetNumberOfElements(prhs[eF]);
    ncon = mxGetM(prhs[eA]);
 
@@ -301,6 +302,9 @@ void checkInputs(
 
    if ( nrhs > eXTYPE && ! mxIsEmpty(prhs[eXTYPE]) && (mxGetNumberOfElements(prhs[eXTYPE]) != ndec) )
       mexErrMsgTxt("xtype has incompatible dimensions");
+
+   if ( nrhs > eX0 && ! mxIsEmpty(prhs[eX0]) && (mxGetNumberOfElements(prhs[eX0]) != ndec) )
+      mexErrMsgTxt("x0 has incompatible dimensions");
 }
 
 /** get long integer option */
@@ -419,7 +423,7 @@ void processUserOpts(
          if ( p == NULL )
          {
             /* clean up SCIP here */
-            sprintf(msgbuf, "SCIP option \"%s\" (row %zd) is not recognised!", name, i + 1);
+            sprintf(msgbuf, "SCIP option \"%s\" (row %zd) is not recognized!", name, i + 1);
             mxFree(name);
             mexErrMsgTxt(msgbuf);
          }
@@ -652,6 +656,7 @@ void mexFunction(
    double* l;
    double* qrl;
    double* qru;
+   double* x0 = NULL;
    char* xtype;
    char* sostype = NULL;
    char fpath[BUFSIZE];
@@ -1269,7 +1274,7 @@ void mexFunction(
       double cval;
       double* objval;
       double oval;
-      double* x0 = NULL;
+      double* xval = NULL;
       double err;
 
       /* check if we have constraint validation points to check against */
@@ -1278,8 +1283,8 @@ void mexFunction(
          conval = mxGetPr(mxGetField(prhs[eNLCON], 0, "nlcon_val"));
 
          /* check if we have initial guess to use */
-         if ( mxGetField(prhs[eNLCON], 0, "x0") )
-            x0 = mxGetPr(mxGetField(prhs[eNLCON], 0, "x0"));
+         if ( mxGetField(prhs[eNLCON], 0, "xval") )
+            xval = mxGetPr(mxGetField(prhs[eNLCON], 0, "xval"));
       }
 
       /* check if we have objective validation point to check against */
@@ -1288,8 +1293,8 @@ void mexFunction(
          objval = mxGetPr(mxGetField(prhs[eNLCON], 0, "obj_val"));
 
          /* check if we have initial guess to use */
-         if ( mxGetField(prhs[eNLCON], 0, "x0") )
-            x0 = mxGetPr(mxGetField(prhs[eNLCON], 0, "x0")); /* same as above but may be uncon */
+         if ( mxGetField(prhs[eNLCON], 0, "xval") )
+            xval = mxGetPr(mxGetField(prhs[eNLCON], 0, "xval")); /* same as above but may be uncon */
       }
 
       /* add nonlinear constraints */
@@ -1322,10 +1327,10 @@ void mexFunction(
                ninstr = mxGetNumberOfElements(mxGetCell(mxGetField(prhs[eNLCON], 0, "instr"), i));
 
                /* add the constraint */
-               cval = addNonlinearCon(scip, vars, instr, ninstr, cl[i], cu[i], x0, i, false);
+               cval = addNonlinearCon(scip, vars, instr, ninstr, cl[i], cu[i], xval, i, false);
 
                /* validate if possible */
-               if ( x0 != NULL )
+               if ( xval != NULL )
                {
                   err = REALABS(cval - conval[i]);
                   if ( SCIPisFeasPositive(scip, err) )
@@ -1348,10 +1353,10 @@ void mexFunction(
             ninstr = mxGetNumberOfElements(mxGetField(prhs[eNLCON], 0, "instr"));
 
             /* add the constraint */
-            cval = addNonlinearCon(scip, vars, instr, ninstr, *cl, *cu, x0, 0, false);
+            cval = addNonlinearCon(scip, vars, instr, ninstr, *cl, *cu, xval, 0, false);
 
             /* Validate if possible */
-            if ( x0 != NULL )
+            if ( xval != NULL )
             {
                err = REALABS(cval - *conval);
                if ( SCIPisFeasPositive(scip, err) )
@@ -1376,10 +1381,10 @@ void mexFunction(
          ninstr = mxGetNumberOfElements(mxGetField(prhs[eNLCON], 0, "obj_instr"));
 
          /* add the objective as nonlinear constraint: obj(x) - nlobj = 0, and min(x) f'x + nlobj */
-         oval = addNonlinearCon(scip, vars, instr, ninstr, 0, 0, x0, 0, true);
+         oval = addNonlinearCon(scip, vars, instr, ninstr, 0, 0, xval, 0, true);
 
          /* validate if possible */
-         if ( x0 != NULL )
+         if ( xval != NULL )
          {
             err = REALABS(oval - *objval);
             if ( SCIPisFeasPositive(scip, err) )
@@ -1394,6 +1399,23 @@ void mexFunction(
 #endif
          }
       }
+   }
+
+   /* process primal solution (if it exits) */
+   if ( nrhs > eX0 && ! mxIsEmpty(prhs[eX0]) )
+   {
+      SCIP_SOL* sol;
+      SCIP_Bool stored;
+
+      x0 = mxGetPr(prhs[eX0]);
+      assert( x0 != NULL );
+      SCIP_ERR( SCIPcreateSol(scip, &sol, NULL), "Error creating empty solution");
+
+      for (i = 0; i < ndec; i++)
+      {
+         SCIP_ERR( SCIPsetSolVal(scip, sol, vars[i], x0[i]), "Error creating setting solution value");
+      }
+      SCIP_ERR( SCIPaddSolFree(scip, &sol, &stored), "Error adding solution" );
    }
 
    /* process advanced user options (if they exist) */

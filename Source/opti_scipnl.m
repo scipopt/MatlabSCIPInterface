@@ -1,4 +1,4 @@
-function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint,x0,opts)
+function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint,x0,xval,opts)
 %OPTI_SCIPNL Solve a NLP/MINLP using SCIP to Global Optimality
 %
 %   min fun(x)                 subject to:     rl <= A*x <= ru
@@ -8,7 +8,7 @@ function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint
 %                                              for j = 1..m: xj in {0,1} [i!=j]
 %
 %   Full Calling Form:
-%     [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint,x0,opts)
+%     [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint,x0,xval,opts)
 %
 %   NOTE:
 %     This solver (and interface) parses your supplied function(s) into an
@@ -20,7 +20,7 @@ function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint
 %
 %
 %   x = opti_scipnl(fun) solves an unconstrained NLP (UNO) with objective
-%   specified by fun. Note you must supply x0 if solving an UNO.
+%   specified by fun. Note you must supply xval if solving an UNO.
 %
 %   x = opti_scipnl(fun,A,rl,ru) solves a NLP subject to linear constraints
 %   where A is the linear constraint matrix, and rl and ru are lower and
@@ -38,10 +38,12 @@ function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint
 %   binary constraints specified by xint. Integer constraints are specified
 %   using a string of integer variables ('C', 'I', 'B').
 %
-%   x = opti_scipnl(fun,...,xint,x0) uses x0 to supply a validation vector
-%   of the decision variables for the MEX interface, to use to verify your 
-%   objective and constraints have been successfully converted to SCIP
-%   expressions. Note it DOES NOT supply a starting guess to the solver (currently).
+%   x = opti_scipnl(fun,...,xint,x0) uses x0 as a starting point.
+%
+%   x = opti_scipnl(fun,...,xint,xval) uses xval as a validation
+%   vector of the decision variables for the MEX interface, to use to
+%   verify your objective and constraints have been successfully
+%   converted to SCIP expressions.
 %
 %   x = opti_scipnl(fun,...,x0,opts) uses opts to pass optiset options to the
 %   solver.
@@ -50,14 +52,15 @@ function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint
 %   the solution, together with the solver exitflag, and an information
 %   structure.
 %
-%   THIS IS A WRAPPER FOR SCIP USING THE MEX INTERFACE
+%   This is a wrapper for SCIP using the mex interface.
 %   See the SCIP license.
 %   Copyright (C) 2012/2013 Jonathan Currie (IPL)
 
 t = tic;
 
 % Handle missing arguments
-if nargin < 12, opts = optiset; end
+if nargin < 13, opts = optiset; end
+if nargin < 12, xval = []; end
 if nargin < 11, x0 = []; end
 if nargin < 10, xint = []; end
 if nargin < 9, cu = []; end
@@ -71,8 +74,8 @@ if nargin < 2, A = []; end
 if nargin < 1, error('You must supply at least one argument to opti_scipnl.'); end
 
 % check for number of decision variables
-if(~isempty(x0))       % vector or matrix
-    ndec = numel(x0);
+if(~isempty(xval))       % vector or matrix
+    ndec = numel(xval);
 elseif(~isempty(lb))   % vector
     ndec = length(lb);
 elseif(~isempty(ub))   % vector
@@ -84,12 +87,12 @@ elseif(~isempty(A))
 else
     error('The MATLAB-SCIP Interface requires the number of variables to be specified.\n%s',...
           ['The interface cannot determine this number from your problem thus you will need',...
-          ' to specify this via x0, e.g. x0 = ones(no_vars,1).']);
+          ' to specify this via xval, e.g. xval = ones(no_vars,1).']);
 end
 
-% build x0 if empty, used for validation
-if(isempty(x0))
-    x0 = randn(ndec,1); 
+% build xval if empty, used for validation
+if(isempty(xval))
+    xval = randn(ndec,1);
 end
 
 if(isfield(opts,'warnings'))
@@ -99,36 +102,36 @@ else
 end
 
 % check for NaNs
-if(any(isnan(x0)))
+if(any(isnan(xval)))
     if(warn)
-        optiwarn('opti:nan','For the SCIP interface x0 must not contain NaN. Replacing with random numbers.');
+        optiwarn('opti:nan','For the SCIP interface xval must not contain NaN. Replacing with random numbers.');
     end
-    x0 = randn(ndec,1);
+    xval = randn(ndec,1);
 end
 
 % encode nonlinear constraints into SCIP MEX interface instruction lists
-x = scipvar(size(x0));
+x = scipvar(size(xval));
 if(~isempty(nlcon))
     try
         n = nlcon(x);
     catch ME
-        ex = processEqErr(ME,'a constraint'); 
+        ex = processEqErr(ME,'a constraint');
         throwAsCaller(ex);
     end
     if(numel(n) > 1) % multiple constraints
         nl.instr = cell(numel(n),1);
-        for i = 1:numel(n)            
+        for i = 1:numel(n)
             if(isnumeric(n(i))) % read as number
-                nl.instr{i} = [0 n(i)]; 
+                nl.instr{i} = [0 n(i)];
             elseif(isempty(n(i).ins)) % assume just a variable
                 nl.instr{i} = [1; n(i).indx];
             else
                 nl.instr{i} = n(i).ins;
             end
-        end        
-    else        
+        end
+    else
         if(isnumeric(n)) % read as number
-            nl.instr = [0 n]; 
+            nl.instr = [0 n];
         elseif(isempty(n.ins)) % assume just a variable
             nl.instr = [1; n.indx];
         else
@@ -138,11 +141,11 @@ if(~isempty(nlcon))
     nl.cl = cl;
     nl.cu = cu;
     % verification fields
-    nl.nlcon_val = nlcon(x0);
-    nl.x0 = x0;
+    nl.nlcon_val = nlcon(xval);
+    nl.xval = xval;
     % check for Inf or NaN
     if(any(isnan(nl.nlcon_val)) || any(isinf(nl.nlcon_val)))
-        error('One or more constraints resulted in Inf or NaN at the initial guess (x0). Please provide a better initial guess vector.');
+        error('One or more constraints resulted in Inf or NaN at the initial guess (xval). Please provide a better initial guess vector.');
     end
 end
 
@@ -153,20 +156,20 @@ if(~isempty(fun))
     catch ME
         ex = processEqErr(ME,'the objective');
         throwAsCaller(ex);
-    end    
+    end
     if(isnumeric(f)) %read as number
-        nl.obj_instr = [0 f]; 
+        nl.obj_instr = [0 f];
     elseif(isempty(f.ins)) %assume just a variable
         nl.obj_instr = [1; f.indx];
     else
         nl.obj_instr = f.ins;
     end
     % verification field
-    nl.obj_val = fun(x0);
-    nl.x0 = x0;
+    nl.obj_val = fun(xval);
+    nl.xval = xval;
     % check for Inf or NaN
     if(any(isnan(nl.obj_val)) || any(isinf(nl.obj_val)))
-        error('The objective resulted in Inf or NaN at the initial guess (x0). Please provide a better initial guess vector.');
+        error('The objective resulted in Inf or NaN at the initial guess (xval). Please provide a better initial guess vector.');
     end
 end
 
@@ -180,8 +183,8 @@ end
 
 % adding SCIP settings if specified
 if(isfield(opts,'solverOpts') && ~isempty(opts.solverOpts))
-    sopts = scipset(opts.solverOpts);    
-else    
+    sopts = scipset(opts.solverOpts);
+else
     sopts = [];
 end
 
@@ -207,10 +210,10 @@ end
 sopts.optiver = optiver;
 
 % run SCIP
-[x,fval,exitflag,stats] = scip([],zeros(ndec,1),A,rl,ru,lb,ub,xint,[],[],nl,sopts);
+[x,fval,exitflag,stats] = scip([],zeros(ndec,1),A,rl,ru,lb,ub,xint,[],[],nl,x0,sopts);
 
 % reshape output
-x = reshape(x,size(x0));
+x = reshape(x,size(xval));
 
 % assign outputs
 info.BBNodes = stats.BBnodes;

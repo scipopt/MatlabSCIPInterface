@@ -60,17 +60,17 @@ end
 if(size(prob.f,2) > 1)
     prob.f = prob.f';
 end
-if(~isempty(prob.x0))
-    [r,c] = size(prob.x0);
+if(~isempty(prob.xval))
+    [r,c] = size(prob.xval);
     if(r > 1 && c > 1)
         error('OPTI does not currently solve matrix problems. Please use reshape() within your objective / constraints, and pass x0 as a vector to OPTI to solve these problems');
     end
     if(c > 1)
-        prob.x0 = prob.x0';
+        prob.xval = prob.xval';
     end
-    if(issparse(prob.x0))
-        if(warn > 1), optiwarn('opti:sparsex0','The initial guess (x0) must be a dense vector'); end
-        prob.x0 = full(prob.x0);
+    if(issparse(prob.xval))
+        if(warn > 1), optiwarn('opti:sparsex0','The initial guess (xval) must be a dense vector'); end
+        prob.xval = full(prob.xval);
     end
 end
 
@@ -97,10 +97,10 @@ elseif(~isempty(prob.sdcone) && isstruct(prob.sdcone) && isfield(prob.sdcone,'b'
     siz.ndec = length(prob.sdcone.b); %sedumi b
 end
 
-%Check x0 if we have ndec
-if(~isempty(siz.ndec) && ~isempty(prob.x0))
-    if(siz.ndec  ~= length(prob.x0))
-        error('The supplied x0 is not the correct length, expected %d x 1',siz.ndec);
+% Check xval if we have ndec
+if(~isempty(siz.ndec) && ~isempty(prob.xval))
+    if(siz.ndec  ~= length(prob.xval))
+        error('The supplied xval is not the correct length, expected %d x 1',siz.ndec);
     end
 end
 
@@ -134,8 +134,8 @@ end
 %--Check Constraints--%
 %Get ndec
 if(isempty(siz.ndec))
-    if(~isempty(prob.x0))
-        siz.ndec = length(prob.x0);
+    if(~isempty(prob.xval))
+        siz.ndec = length(prob.xval);
     elseif(~isempty(prob.lb))
         siz.ndec = length(prob.lb);
     elseif(~isempty(prob.ub))
@@ -162,10 +162,10 @@ end
 %Build in equalities if missing
 if(misc.forceSNLE && isempty(prob.cl) && isempty(prob.nlrhs))
     if(isempty(siz.ndec))
-        error('Please supply the number of decision variables via x0, or via cl,cu = zeros() if not square, to solve a system of nonlinear equations');
+        error('Please supply the number of decision variables via xval, or via cl,cu = zeros() if not square, to solve a system of nonlinear equations');
     end
-    if(~isempty(prob.x0) && length(prob.x0) == siz.ndec && all(~isnan(prob.x0)))
-        neqs = length(prob.nlcon(prob.x0));
+    if(~isempty(prob.xval) && length(prob.xval) == siz.ndec && all(~isnan(prob.xval)))
+        neqs = length(prob.nlcon(prob.xval));
     else
         neqs = length(prob.nlcon(zeros(siz.ndec,1)));
     end
@@ -846,19 +846,19 @@ end
 
 %Check if UNO (scalar) or SNLE/SCNLE (vector) 
 if(strcmpi(prb,'NLP') && ~misc.forceSNLE)
-    % Get x0 (or try and make one)
-    if(isfield(prob,'x0') && ~isempty(prob.x0))
-        x0 = prob.x0;
+    % Get xval (or try and make one)
+    if(isfield(prob,'xval') && ~isempty(prob.xval))
+        xval = prob.xval;
     elseif(prob.sizes.ndec)
-        x0 = zeros(prob.sizes.ndec,1);
+        xval = zeros(prob.sizes.ndec,1);
         if(warn > 1)
-            optiwarn('OPTI:nox0','OPTI is testing your objective function but does not have an x0 to use - assuming zeros(n,1).\n Please supply x0 to opti/optiprob to avoid this warning.');
+            optiwarn('OPTI:noxval','OPTI is testing your objective function but does not have an xval to use - assuming zeros(n,1).\n Please supply xval to opti/optiprob to avoid this warning.');
 		end
     else
-        error('OPTI cannot determine whether you are solving a UNO or SNLE. Please supply ndec or x0 to opti/optiprob to continue.');
+        error('OPTI cannot determine whether you are solving a UNO or SNLE. Please supply ndec or xval to opti/optiprob to continue.');
     end
     try
-        testObj = prob.fun(x0);
+        testObj = prob.fun(xval);
         l = length(testObj);
     catch ME
         fprintf(2,'OPTI detected an error running a test objective call. Please correct the error below and try again:\n\n');
@@ -870,7 +870,7 @@ if(strcmpi(prb,'NLP') && ~misc.forceSNLE)
     end
     if(l > 1)
         %Check n = n
-        if(l ~= length(x0))
+        if(l ~= length(xval))
             error('OPTI can only solve nonlinear equations which have n equations and n variables');
         end
 		%If constrained, ensure only linearly or bound constrained
@@ -914,7 +914,7 @@ if(misc.forceSNLE)
                ' or as a series of constraints using ''nlcon'' and ''nljac''']);
     end
     if(isempty(siz.ndec))
-        error('OPTI requires the number of decisions variables to continue pre-processing. Please supply ndec or x0 to opti()');
+        error('OPTI requires the number of decisions variables to continue pre-processing. Please supply ndec or xval to opti()');
     end
     %Check for sparse derivatives, if so, solve as NLP, otherwise, convert to normal OPTI SNLE problem
     isNormalSNLE = true; haveDeriv = false; isJacSparse = false;
@@ -925,12 +925,12 @@ if(misc.forceSNLE)
             isNormalSNLE = false; isJacSparse = true;
         %Test if we have a sparse Jacobian
         else
-            if(~isempty(prob.x0) && length(prob.x0) == siz.ndec && all(~isnan(prob.x0)))
-                test_x0 = prob.x0;
+            if(~isempty(prob.xval) && length(prob.xval) == siz.ndec && all(~isnan(prob.xval)))
+                test_xval = prob.xval;
             else
-                test_x0 = zeros(siz.ndec,1);
+                test_xval = zeros(siz.ndec,1);
             end
-            if(issparse(prob.nljac(test_x0)))
+            if(issparse(prob.nljac(test_xval)))
                 isNormalSNLE = false; isJacSparse = true;
             end
         end
@@ -1028,16 +1028,16 @@ end
 
 %Check correct number of nonlinear constraints (requires a call to nlcon but error otherwise is pretty hard to follow)
 if(cnl && ~isempty(prob.nlcon))
-    % Get x0 (or try and make one)
-    if(isfield(prob,'x0') && ~isempty(prob.x0))
-        x0 = prob.x0;
+    % Get xval (or try and make one)
+    if(isfield(prob,'xval') && ~isempty(prob.xval))
+        xval = prob.xval;
     else
-        x0 = zeros(prob.sizes.ndec,1);
+        xval = zeros(prob.sizes.ndec,1);
         if(warn > 1)
-            optiwarn('OPTI:nox0','OPTI is testing your nonlinear constraint function(s) but does not have an x0 to use - assuming zeros(n,1).\n Please supply x0 to opti/optiprob to avoid this warning.');
+            optiwarn('OPTI:noxval','OPTI is testing your nonlinear constraint function(s) but does not have an xval to use - assuming zeros(n,1).\n Please supply xval to opti/optiprob to avoid this warning.');
         end
     end    
-    testNLCon = prob.nlcon(x0);
+    testNLCon = prob.nlcon(xval);
     nnlcon = length(testNLCon);
     % Ensure constraints return a double
     if (~isa(testNLCon, 'double'))
@@ -1657,25 +1657,25 @@ end
 chkGrad = false;
 chkJac = false;
 chkHess = false;
-genX0 = false;
+genXVAL = false;
 
-%Read or Generate x0
-if(isempty(prob.x0) || any(isnan(prob.x0)))
+%Read or Generate xval
+if(isempty(prob.xval) || any(isnan(prob.xval)))
     if(prob.sizes.ndec == 0)
-        error('OPTI cannot check your derivatives without knowing the size of the problem. Please supply x0 or ndec to the OPTI constructor.');
+        error('OPTI cannot check your derivatives without knowing the size of the problem. Please supply xval or ndec to the OPTI constructor.');
     end
-    x0 = rand(prob.sizes.ndec,1);
+    xval = rand(prob.sizes.ndec,1);
     if(~isempty(prob.lb))
-        ind = x0 < prob.lb;
-        x0(ind) = prob.lb(ind);
+        ind = xval < prob.lb;
+        xval(ind) = prob.lb(ind);
     end
     if(~isempty(prob.ub))
-        ind = x0 > prob.ub;
-        x0(ind) = prob.ub(ind);
+        ind = xval > prob.ub;
+        xval(ind) = prob.ub(ind);
     end
-    genX0 = true;    
+    genXVAL = true;    
 else
-    x0 = prob.x0;
+    xval = prob.xval;
 end
 
 %Check Gradient?
@@ -1691,18 +1691,18 @@ if(~isempty(prob.H) && isa(prob.H,'function_handle') && ~prob.numdif.hess && chk
     chkHess = true;
 end
 
-if(genX0 && (chkGrad || chkJac || chkHess))
-    if(warn>1), optiwarn('OPTI:Nox0','OPTI is randomly choosing a point a to test the user supplied derivatives. Supply a starting point as x0 to OPTI to select this point manually.'); end
+if(genXVAL && (chkGrad || chkJac || chkHess))
+    if(warn>1), optiwarn('OPTI:Noxval','OPTI is randomly choosing a point a to test the user supplied derivatives. Supply a starting point as xval to OPTI to select this point manually.'); end
 end
 
 %Do Actual Checking
-if(chkGrad), optiDerCheck(prob.fun,prob.f,x0,'Objective Gradient',warn); end
-if(chkJac), optiDerCheck(prob.nlcon,prob.nljac,x0,'Constraint Jacobian',warn,prob.nljacstr()); end
+if(chkGrad), optiDerCheck(prob.fun,prob.f,xval,'Objective Gradient',warn); end
+if(chkJac), optiDerCheck(prob.nlcon,prob.nljac,xval,'Constraint Jacobian',warn,prob.nljacstr()); end
 if(chkHess)
     if(chkJac)
-        optiHessCheck(prob.H,prob.f,prob.nljac,x0,'Hessian of the Lagrangian',warn,prob.Hstr()); 
+        optiHessCheck(prob.H,prob.f,prob.nljac,xval,'Hessian of the Lagrangian',warn,prob.Hstr()); 
     else
-        optiHessCheck(prob.H,prob.f,prob.nljac,x0,'Hessian',warn,prob.Hstr()); 
+        optiHessCheck(prob.H,prob.f,prob.nljac,xval,'Hessian',warn,prob.Hstr()); 
     end
 end
 
