@@ -8,6 +8,9 @@ function current_version = optiver
 current_version = 3.00;
 
 % History
+% 3.01 ...
+% - Add possibility to add initial primal solution x0.
+% - Allow to set parameters in SCIP-SDP.
 
 % 3.00 (09/2021)
 % - Complete revision based on previous version of OPTI toolbox.
