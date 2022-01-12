@@ -1,4 +1,4 @@
-function opti_solverMex(name,src, cxx_custom,inc,lib, opts)
+function opti_solverMex(name,src,cxx_custom,inc,lib,opts)
 %OPTI_SOLVERMEX  Compiles a MEX Interface to an OPTI Solver
 %
 %   opti_solverMex(name,src,inc,libs,opts)
