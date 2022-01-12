@@ -101,7 +101,7 @@ classdef opti < handle
             end
 
             %get optional xval
-            if(nargin < 2 || isempty(xval))
+            if(nargin < 3 || isempty(xval))
                 if(~isempty(optObj.prob.xval) && ~any(isnan(optObj.prob.xval)))
                     xval = optObj.prob.xval;
                 else
