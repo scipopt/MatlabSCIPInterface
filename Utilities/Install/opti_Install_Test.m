@@ -45,7 +45,7 @@ for t = 1:length(tests)
         if(verb); fprintf(' %s ', msolvers{i}); end
         for j = 1:noP
             if(verb); fprintf(' %d ', j); end
-            if(moreverb);
+            if(moreverb)
                 Opt = opti(probs{j},optiset('solver',msolvers{i},'warnings','off','display','iter'));
             else
                 Opt = opti(probs{j},optiset('solver',msolvers{i},'warnings','off','display','off'));
