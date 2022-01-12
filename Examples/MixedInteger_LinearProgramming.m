@@ -21,13 +21,15 @@ b = [16;28;6];
 lb = [0;0];                 % bounds on x (lb <= x <= ub)
 ub = [10;10];
 xtype = 'II';               % integer variables (I = integer, C = continuous, B = binary)
+x0 = [0,0];
 
 % Building an MILP problem is very similar to an LP, except just add the
 % 'xtype' argument for integer variables:
-Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype)
+opts = optiset('display','off');
+Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype,'options',opts)
 
 % Call solve to solve the problem:
-[x,fval,exitflag,info] = solve(Opt)
+[x,fval,exitflag,info] = solve(Opt,x0)
 
 %% Example 2 - Alternative Integer Setup
 % You can also supply an vector of integer indices indicating the position of
