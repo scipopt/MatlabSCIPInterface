@@ -42,10 +42,10 @@ end
 
 %Check if unsolved
 if(isempty(xb) && ~strcmpi(mode,'multi'))
-    %Check if we have valid x0
-    if(~isempty(prob.x0) && ~all(isnan(prob.x0)))
-        mode = 'usex0';
-        xb = prob.x0;
+    %Check if we have valid xval
+    if(~isempty(prob.xval) && ~all(isnan(prob.xval)))
+        mode = 'usexval';
+        xb = prob.xval;
     elseif(~isempty(prob.lb) && ~isempty(prob.ub) && ~all(isinf(prob.lb)) && ~all(isinf(prob.ub)))
         mode = 'bounded';
         %fake xb for >2D plotting purposes
@@ -55,12 +55,12 @@ if(isempty(xb) && ~strcmpi(mode,'multi'))
             mode = 'bounded_scale';
         end
     else
-        error('OPTI can only plot unsolved problems that have a specified x0, or if all variables are bounded.');
+        error('OPTI can only plot unsolved problems that have a specified xval, or if all variables are bounded.');
     end
 end
 
 %Only plot fit if normal plot
-if(any(strcmpi(mode,{'normal','usex0'})))
+if(any(strcmpi(mode,{'normal','usexval'})))
     %Check for parameter estimation problem
     if(strcmpi(prob.type,'DNLS'))
         plotDNLS(prob,opts,xb,confStats);
@@ -139,8 +139,8 @@ function plotProblem(prob,xb,data)
 %Plot Objective Contour
 [data.npts,data.xl,data.yl] = plotObj(prob,xb,data);
 
-%Initial x0 Colour
-ix0col = [0 183/255 91/255];
+%Initial xval Colour
+ixvalcol = [0 183/255 91/255];
 
 %If we have search space (i.e. multisolve has been run), also plot
 if(strcmp(data.mode,'multi') && isfield(prob,'multi') && ~isempty(prob.multi))
@@ -218,25 +218,25 @@ if(~isempty(xb))
             else
                 plot(xb(idx(1)),xb(idx(2)),'r.','markersize',20);
             end
-        case 'usex0'
+        case 'usexval'
             if(length(xb)==1)
-                plot(xb(idx(1)),prob.objective(xb).*prob.sense,'.','color',ix0col,'markersize',20);
+                plot(xb(idx(1)),prob.objective(xb).*prob.sense,'.','color',ixvalcol,'markersize',20);
             else
-                plot(xb(idx(1)),xb(idx(2)),'.','color',ix0col,'markersize',20);
+                plot(xb(idx(1)),xb(idx(2)),'.','color',ixvalcol,'markersize',20);
             end
     end
     hold off
 end
 %Plot Initial Guess
-if(~isempty(prob.x0))
+if(~isempty(prob.xval))
     idx = data.idx;
     hold on
     switch(data.mode)
         case {'normal','multi'}
             if(length(xb)==1)
-                plot(prob.x0(idx(1)),prob.objective(prob.x0).*prob.sense,'.','color',ix0col,'markersize',10);
+                plot(prob.xval(idx(1)),prob.objective(prob.xval).*prob.sense,'.','color',ixvalcol,'markersize',10);
             else
-                plot(prob.x0(idx(1)),prob.x0(idx(2)),'.','color',ix0col,'markersize',10);
+                plot(prob.xval(idx(1)),prob.xval(idx(2)),'.','color',ixvalcol,'markersize',10);
             end
     end
     hold off
