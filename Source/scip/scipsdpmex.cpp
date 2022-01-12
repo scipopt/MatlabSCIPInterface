@@ -221,6 +221,191 @@ int getStrOption(
    }
 }
 
+/** process options specified by user
+ *
+ *  Options in the format {'name1', val1; 'name2', val2}
+ */
+static
+void processUserOpts(
+   SCIP*                 scip,               /**< SCIP instance */
+   mxArray*              opts                /**< options array */
+   )
+{
+   SCIP_RETCODE retcode;
+   size_t no;
+   char* name;
+   char* str_val;
+   SCIP_Bool boolval;
+   mxArray* opt_name;
+   mxArray* opt_val;
+   SCIP_PARAM* p = NULL;
+
+   if ( ! mxIsEmpty(opts) )
+   {
+      if ( ! mxIsCell(opts) || mxGetN(opts) != 2 )
+         mexErrMsgTxt("SCIP Options (scipopts) should be a cell array of the form {'name1', val1; 'name2', val2}.");
+
+      /* process each option */
+      no = mxGetM(opts);
+
+      for (size_t i = 0; i < no; i++)
+      {
+         p = NULL; /* ensures we know if we got a valid parameter or not! */
+
+         opt_name = mxGetCell(opts, i);
+         opt_val = mxGetCell(opts, i + no);
+
+         if ( mxIsEmpty(opt_name) )
+         {
+            sprintf(msgbuf, "SCIP option name in cell row %zd is empty!", i + 1);
+            mexErrMsgTxt(msgbuf);
+         }
+
+         if ( mxIsEmpty(opt_val) )
+            continue; /* skip this one */
+
+         if ( ! mxIsChar(opt_name) )
+         {
+            sprintf(msgbuf, "SCIP option name in cell row %zd is not a string!", i + 1);
+            mexErrMsgTxt(msgbuf);
+         }
+
+         name = mxArrayToString(opt_name);
+
+         /* attempt to get SCIP parameter information */
+         p = SCIPgetParam(scip, name);
+
+         /* no luck finding it */
+         if ( p == NULL )
+         {
+            /* clean up SCIP here */
+            sprintf(msgbuf, "SCIP option \"%s\" (row %zd) is not recognized!", name, i + 1);
+            mxFree(name);
+            mexErrMsgTxt(msgbuf);
+         }
+
+         /* based on parameter type, get from MATLAB and set via correct SCIP method */
+         switch ( SCIPparamGetType(p) )
+         {
+         case SCIP_PARAMTYPE_BOOL:
+            if ( ! mxIsDouble(opt_val) && ! mxIsLogical(opt_val) )
+            {
+               sprintf(msgbuf, "Error setting parameter \"%s\" - expected the value to be a double or logical.", name);
+               mexErrMsgTxt(msgbuf);
+            }
+
+            if ( mxIsLogical(opt_val) )
+            {
+               bool* tval = (bool*)mxGetData(opt_val);
+               if ( *tval )
+                  boolval = TRUE;
+               else
+                  boolval = FALSE;
+            }
+            else
+            {
+               double* tval = (double*)mxGetPr(opt_val);
+               if ( *tval != 0 )
+                  boolval = TRUE;
+               else
+                  boolval = FALSE;
+            }
+
+            retcode = SCIPsetBoolParam(scip, name, boolval);
+            if ( retcode != SCIP_OKAY )
+            {
+               sprintf(msgbuf, "Error setting SCIP bool option \"%s\" (Row %zd)! Please check the value is within range.", name, i + 1);
+               mexErrMsgTxt(msgbuf);
+            }
+            break;
+
+         case SCIP_PARAMTYPE_INT:
+            if ( ! mxIsDouble(opt_val) )
+            {
+               sprintf(msgbuf, "Error setting parameter \"%s\" - Expected the value to be a double.", name);
+               mexErrMsgTxt(msgbuf);
+            }
+
+            retcode = SCIPsetIntParam(scip, name, (int) *mxGetPr(opt_val));
+            if ( retcode != SCIP_OKAY )
+            {
+               sprintf(msgbuf, "Error setting SCIP integer option \"%s\" (row %zd)! Please check the value is within range.", name, i + 1);
+               mexErrMsgTxt(msgbuf);
+            }
+            break;
+
+         case SCIP_PARAMTYPE_LONGINT:
+            if ( ! mxIsDouble(opt_val) )
+            {
+               sprintf(msgbuf, "Error setting parameter \"%s\" - Expected the value to be a double.", name);
+               mexErrMsgTxt(msgbuf);
+            }
+
+            retcode = SCIPsetLongintParam(scip, name, *mxGetPr(opt_val));
+            if ( retcode != SCIP_OKAY )
+            {
+               sprintf(msgbuf, "Error setting SCIP longint option \"%s\" (Row %zd)! Please check the value is within range.", name, i + 1);
+               mexErrMsgTxt(msgbuf);
+            }
+            break;
+
+         case SCIP_PARAMTYPE_REAL:
+            if ( ! mxIsDouble(opt_val) )
+            {
+               sprintf(msgbuf, "Error setting parameter \"%s\" - Expected the value to be a double.", name);
+               mexErrMsgTxt(msgbuf);
+            }
+
+            retcode = SCIPsetRealParam(scip, name, *mxGetPr(opt_val));
+            if ( retcode != SCIP_OKAY )
+            {
+               sprintf(msgbuf, "Error setting SCIP real option \"%s\" (Row %zd)! Please check the value is within range.", name, i + 1);
+               mexErrMsgTxt(msgbuf);
+            }
+            break;
+
+         case SCIP_PARAMTYPE_CHAR:
+            if ( ! mxIsChar(opt_val) )
+            {
+               sprintf(msgbuf, "Error setting parameter \"%s\" - Expected the value to be a character.", name);
+               mexErrMsgTxt(msgbuf);
+            }
+            str_val = mxArrayToString(opt_val);
+
+            retcode = SCIPsetCharParam(scip, name, str_val[0]);
+            if ( retcode != SCIP_OKAY )
+            {
+               sprintf(msgbuf, "Error setting SCIP char option \"%s\" (Row %zd)! Please check the value is a valid character.", name, i + 1);
+               mxFree(str_val);
+               mexErrMsgTxt(msgbuf);
+            }
+            mxFree(str_val);
+            break;
+
+         case SCIP_PARAMTYPE_STRING:
+            if ( ! mxIsChar(opt_val) )
+            {
+               sprintf(msgbuf, "Error setting parameter \"%s\" - Expected the value to be a string", name);
+               mexErrMsgTxt(msgbuf);
+            }
+            str_val = mxArrayToString(opt_val);
+
+            retcode = SCIPsetStringParam(scip, name, str_val);
+            if ( retcode != SCIP_OKAY )
+            {
+               sprintf(msgbuf,"Error setting SCIP string option \"%s\" (Row %zd)! Please check the value is a valid string.", name, i + 1);
+               mxFree(str_val);
+               mexErrMsgTxt(msgbuf);
+            }
+            mxFree(str_val);
+            break;
+         }
+         /* free string memory */
+         mxFree(name);
+      }
+   }
+}
+
 /* add SDP constraint */
 static
 void addSDPConstraint(
@@ -715,6 +900,14 @@ void mexFunction(
          SCIP_ERR( SCIPsetSolVal(scip, sol, vars[i], x0[i]), "Error creating setting solution value");
       }
       SCIP_ERR( SCIPaddSolFree(scip, &sol, &stored), "Error adding solution" );
+   }
+
+   /* process advanced user options (if they exist) */
+   if ( nrhs > optsEntry )
+   {
+      /* process specific options (overriding emphasis options) */
+      if ( mxGetField(OPTS, 0, "scipopts") )
+         processUserOpts(scip, mxGetField(OPTS, 0, "scipopts"));
    }
 
    /* solve problem if not in writing mode */
