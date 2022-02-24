@@ -64,7 +64,7 @@ x0 = [-2; 1];           % starting guess of solution
 Opt = opti('obj',obj,'grad',grad,'lb',lb)
 
 % Call solve to solve the problem:
-[x,fval,exitflag,info] = solve(Opt,x0)
+[x,fval,exitflag,info] = solve(Opt,x0,xval)
 
 %% Example 2 - Alternative Setup Strategies
 % Naming of arguments, as well as pairing is flexible when using opti
@@ -81,7 +81,7 @@ Opt = opti('obj',obj,'f',grad,'lb',lb); %f = grad
 clc
 Opt = opti('obj',obj,'lb',lb)
 
-x = solve(Opt,x0)
+x = solve(Opt,x0,xval)
 
 %% Example 4 - Unconstrained Nonlinear Optimization
 % If you do not supply any constraints OPTI will solve the problem using an
@@ -90,7 +90,7 @@ x = solve(Opt,x0)
 clc
 Opt = opti('obj',obj,'ndec',2)
 
-x = solve(Opt,x0)
+x = solve(Opt,x0,xval)
 
 %TODO Commented as this problem takes a very long time or loops
 % %% Example 5 - Nonlinear Constraints
