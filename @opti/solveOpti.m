@@ -33,14 +33,16 @@ if(~isempty(xval))
     % Save xval to all problem structures
     if(~isempty(prob)), prob.xval = xval; end
     if(~isempty(nl)), nl.xval = xval; end
-else
-    if(~isempty(nl) && isfield(nl,'xval') && ~isempty(nl.xval))
-        if(any(isnan(nl.xval))), error('Initial Guess (xval) Contains NaN!'); end
-        if(any(isinf(nl.xval))), error('Initial Guess (xval) Contains Inf!'); end
-    elseif(~isempty(prob) && ~isempty(prob.xval))
-        if(any(isnan(prob.xval))), error('Initial Guess (xval) Contains NaN!'); end
-        if(any(isinf(prob.xval))), error('Initial Guess (xval) Contains Inf!'); end
-    end
+% The following test has been removed: do not use initial points from other
+% structures - instead rely on input parameter.
+%else
+%    if(~isempty(nl) && isfield(nl,'xval') && ~isempty(nl.xval))
+%        if(any(isnan(nl.xval))), error('Initial Guess (xval) Contains NaN!'); end
+%        if(any(isinf(nl.xval))), error('Initial Guess (xval) Contains Inf!'); end
+%    elseif(~isempty(prob) && ~isempty(prob.xval))
+%        if(any(isnan(prob.xval))), error('Initial Guess (xval) Contains NaN!'); end
+%        if(any(isinf(prob.xval))), error('Initial Guess (xval) Contains Inf!'); end
+%    end
 end
 
 
