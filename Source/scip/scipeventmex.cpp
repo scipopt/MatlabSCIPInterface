@@ -12,8 +12,8 @@
 #include <signal.h>
 #include <scip/scip.h>
 
+#ifndef HAVE_OCTAVE
 /* Ctrl-C Detection */
-/*
 #ifdef __cplusplus
      extern "C" bool utIsInterruptPending();
      extern "C" void utSetInterruptPending(bool);
@@ -21,7 +21,7 @@
      extern bool utIsInterruptPending();
      extern void utSetInterruptPending(bool);
 #endif
-*/
+#endif
 
 /** executed when adding the event */
 static
@@ -45,14 +45,15 @@ SCIP_DECL_EVENTEXIT(eventExitCtrlC)
 static
 SCIP_DECL_EVENTEXEC(eventExecCtrlC)
 {
+#ifndef HAVE_OCTAVE
    /* Check for Ctrl-C */
-   /*
    if (utIsInterruptPending()) {
       utSetInterruptPending(false);
       mexPrintf("\nCtrl-C Detected. Exiting SCIP...\n\n");
       raise(SIGINT);
    }
-   */
+#endif
+
    return SCIP_OKAY; /* always OK - otherwise we don't get intermediate answer */
 }
 
