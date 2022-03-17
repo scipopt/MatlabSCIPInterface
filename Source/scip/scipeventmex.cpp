@@ -13,13 +13,14 @@
 #include <scip/scip.h>
 
 #ifndef HAVE_OCTAVE
-/* Ctrl-C Detection */
+/* The ut functions are private functions within Matlab; we do not need them for octave. */
 #ifdef __cplusplus
-     extern "C" bool utIsInterruptPending();
-     extern "C" void utSetInterruptPending(bool);
+/* Ctrl-C Detection */
+extern "C" bool utIsInterruptPending();
+extern "C" void utSetInterruptPending(bool);
 #else
-     extern bool utIsInterruptPending();
-     extern void utSetInterruptPending(bool);
+extern bool utIsInterruptPending();
+extern void utSetInterruptPending(bool);
 #endif
 #endif
 
@@ -47,7 +48,8 @@ SCIP_DECL_EVENTEXEC(eventExecCtrlC)
 {
 #ifndef HAVE_OCTAVE
    /* Check for Ctrl-C */
-   if (utIsInterruptPending()) {
+   if (utIsInterruptPending())
+   {
       utSetInterruptPending(false);
       mexPrintf("\nCtrl-C Detected. Exiting SCIP...\n\n");
       raise(SIGINT);
