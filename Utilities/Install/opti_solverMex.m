@@ -68,8 +68,6 @@ case 'PCWIN64'
     lib = [lib ' -L''' matlabpath '\extern\lib\win64\mingw64'' -lut '];
 case 'GLNXA64'
     lib = [lib ' -L''/usr/local/lib'' -lut '];
-case 'x86_64-pc-linux-gnu'
-    lib = [lib ' -L''/usr/lib'' -lutil '];
 end
 
 % post messages (output name + preprocessors)
