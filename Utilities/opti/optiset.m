@@ -100,10 +100,9 @@ fprintf('           maxtime: [ Maximum Solver Evaluation Time {1e3s} ] \n');
 fprintf('           tolrfun: [ Relative Function Tolerance {1e-7} ] \n');
 fprintf('           tolafun: [ Absolute Function Tolerance {1e-7} ] \n');
 fprintf('            tolint: [ Absolute Integer Tolerance {1e-5} ] \n');
-fprintf('        solverOpts: [ Solver Specific Options Structure (e.g. from ipoptset(), nomadset(), scipset(), etc.)] \n');
+fprintf('        solverOpts: [ Solver Specific Options Structure (e.g. for SCIP(SDP))] \n');
 fprintf('       dynamicOpts: [ Dynamic Optimization Options Structure ] \n');
 fprintf('           iterfun: [ Iteration Callback Function, stop = iterfun(iter,fval,x) {} ] \n');
 fprintf('          warnings: [ ''all'' or {''critical''} or ''none'' ] \n');
 fprintf('           display: [ {''off''}, ''iter'', ''final'' ] \n');
 fprintf('        derivCheck: [ Derivative Checker {''off''}, ''on'' ] \n');
-

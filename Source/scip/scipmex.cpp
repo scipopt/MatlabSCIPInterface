@@ -387,7 +387,7 @@ void processUserOpts(
    if ( ! mxIsEmpty(opts) )
    {
       if ( ! mxIsCell(opts) || mxGetN(opts) != 2 )
-         mexErrMsgTxt("SCIP Options (scipopts) should be a cell array of the form {'name1', val1; 'name2', val2}.");
+         mexErrMsgTxt("SCIP Options (solverOpts) should be a cell array of the form {'name1', val1; 'name2', val2}.");
 
       /* process each option */
       no = mxGetM(opts);
@@ -1425,8 +1425,8 @@ void mexFunction(
       /* processEmphasisOptions(scip, OPTS); */
 
       /* process specific options (overriding emphasis options) */
-      if ( mxGetField(OPTS, 0, "scipopts") )
-         processUserOpts(scip, mxGetField(OPTS, 0, "scipopts"));
+      if ( mxGetField(OPTS, 0, "solverOpts") )
+         processUserOpts(scip, mxGetField(OPTS, 0, "solverOpts"));
    }
 
    /* SCIP_ERR( SCIPwriteOrigProblem(scip, NULL, "cip", FALSE), "Error writing CIP File."); */

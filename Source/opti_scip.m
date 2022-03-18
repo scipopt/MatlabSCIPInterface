@@ -85,36 +85,8 @@ end
 % remove H if all nz
 if(~isempty(H) && nnz(H) == 0), H = []; end
 
-% adding SCIP settings if specified
-if(isfield(opts,'solverOpts') && ~isempty(opts.solverOpts))
-    sopts = scipset(opts.solverOpts);
-else
-    sopts = [];
-end
-
-% add OPTI options
-if(isfield(opts,'maxtime') && ~isempty(opts.maxtime))
-    sopts.maxtime = opts.maxtime;
-end
-if(isfield(opts,'maxiter') && ~isempty(opts.maxiter))
-    sopts.maxiter = opts.maxiter;
-end
-if(isfield(opts,'maxnodes') && ~isempty(opts.maxnodes))
-    sopts.maxnodes = opts.maxnodes;
-end
-if(isfield(opts,'tolrfun') && ~isempty(opts.tolrfun))
-    sopts.tolrfun = opts.tolrfun;
-end
-if(isfield(opts,'objbias') && ~isempty(opts.objbias))
-    sopts.objbias = opts.objbias;
-end
-if(isfield(opts,'display') && ~isempty(opts.display))
-    sopts.display = dispLevel(opts.display);
-end
-sopts.optiver = optiver;
-
 % MEX contains error checking
-[x,fval,exitflag,stats] = scip(H, f, A, rl, ru, lb, ub, xint, sos, qc, [], x0, sopts);
+[x,fval,exitflag,stats] = scip(H, f, A, rl, ru, lb, ub, xint, sos, qc, [], x0, opts);
 
 % assign outputs
 info.BBNodes = stats.BBnodes;
