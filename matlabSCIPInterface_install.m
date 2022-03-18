@@ -302,14 +302,13 @@ end
 expre = [expre ' -DNO_CONFIG_HEADER'];
 lib = [lib ' '];
 
-switch(computer)
-    case 'GLNXA64'
-        expre = [expre ' LDFLAGS=''-Wl,-rpath,' scipLibPath ''' '];
-    case {'x86_64-pc-linux-gnu', 'x86_64-w64-mingw32'}
+if ~strcmp(computer, 'PCWIN64')
+    if isOctave()
         expre = [expre ' ''-Wl,-rpath,' scipLibPath ''' '];
+    else
+        expre = [expre ' LDFLAGS=''-Wl,-rpath,' scipLibPath ''' '];
+    end
 end
-
-
 
 % This functions checks if the given path contains all directories we expect
 function [defaultFound, installversion] = checkScipLib(installversion, libLoc)
