@@ -10,6 +10,8 @@ current_version = 3.00;
 % History
 % 3.01 ...
 % - Add possibility to add initial primal solution x0.
+% - Rename x0 to xval (a candidate solution).
+% - Revise handling of solver options for SCIP & SCIP-SDP.
 % - Allow to set parameters in SCIP-SDP.
 
 % 3.00 (09/2021)
