@@ -1482,7 +1482,7 @@ void mexFunction(
       SCIP_ERR( SCIPpresolve(scip), "Error presolving SCIP problem!");
 
       /* now write */
-      SCIP_ERR( SCIPwriteTransProblem(scip, cipfile, "cip", false), "Error writing CIP File.");
+      SCIP_ERR( SCIPwriteTransProblem(scip, probfile, NULL, false), "Error writing file.");
    }
    /* else return test status */
    else
