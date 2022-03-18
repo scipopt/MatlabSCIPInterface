@@ -45,7 +45,7 @@ optiSolver('NLP')
 %   terms within the Jacobian.
 %
 % And most importantly - use a good (i.e. feasible & well chosen) initial
-% guess for x0!
+% guess for xval!
 
 %% Example 1
 % This is a simple two decision variable NLP which will use for the next
@@ -78,19 +78,21 @@ Opt = opti('obj',obj,'f',grad,'lb',lb); %f = grad
 % Simply drop 'grad' from the problem to use a numerical difference scheme
 % instead - you will note mklJac (a numerical difference routine) is now
 % used for the gradient.
+
 clc
 Opt = opti('obj',obj,'lb',lb)
 
-x = solve(Opt,x0, xval)
+x = solve(Opt, x0)
 
 %% Example 4 - Unconstrained Nonlinear Optimization
 % If you do not supply any constraints OPTI will solve the problem using an
 % unconstrained NL solver. For problems where OPTI cannot determine the
 % number of decision variables you must supply this to optiprob:
+
 clc
 Opt = opti('obj',obj,'ndec',2)
 
-x = solve(Opt,x0)
+x = solve(Opt, x0)
 
 %TODO Commented as this problem takes a very long time or loops
 % %% Example 5 - Nonlinear Constraints
