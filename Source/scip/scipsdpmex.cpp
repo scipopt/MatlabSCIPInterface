@@ -243,7 +243,7 @@ void processUserOpts(
    if ( ! mxIsEmpty(opts) )
    {
       if ( ! mxIsCell(opts) || mxGetN(opts) != 2 )
-         mexErrMsgTxt("SCIP Options (scipopts) should be a cell array of the form {'name1', val1; 'name2', val2}.");
+         mexErrMsgTxt("SCIP Options (solverOpts) should be a cell array of the form {'name1', val1; 'name2', val2}.");
 
       /* process each option */
       no = mxGetM(opts);
@@ -441,6 +441,7 @@ void addSDPConstraint(
    SCIP_Real* const_val = NULL;
    int nnza = 0;
    int nnzc = 0;
+   int nzerocoef = 0;
 
    /* determine nnz */
    SDP_C_nnz = (int)(SDP_jc[1] - SDP_jc[0]);
@@ -478,14 +479,19 @@ void addSDPConstraint(
 
       if ( rind >= cind )
       {
-         const_row[idx] = rind;
-         const_col[idx] = cind;
-         const_val[idx] = SDP_pr[i];
-         nnzc++;
+         if ( SCIPisZero(scip, SDP_pr[i]) )
+            ++nzerocoef;
+         else
+         {
+            const_row[idx] = rind;
+            const_col[idx] = cind;
+            const_val[idx] = SDP_pr[i];
+            nnzc++;
 #ifdef DEBUG
-         mexPrintf("(%zd) - C[%d,%d] = %f\n", idx, const_row[idx], const_col[idx], const_val[idx]);
+            mexPrintf("(%zd) - C[%d,%d] = %f\n", idx, const_row[idx], const_col[idx], const_val[idx]);
 #endif
-         idx++;
+            idx++;
+         }
       }
    }
 
@@ -505,14 +511,19 @@ void addSDPConstraint(
 
          if ( rind >= cind )
          {
-            row[i-1][idx] = rind;
-            col[i-1][idx] = cind;
-            val[i-1][idx] = SDP_pr[midx];
-            nnza++;
+            if ( SCIPisZero(scip, SDP_pr[midx]) )
+               ++nzerocoef;
+            else
+            {
+               row[i-1][idx] = rind;
+               col[i-1][idx] = cind;
+               val[i-1][idx] = SDP_pr[midx];
+               nnza++;
 #ifdef DEBUG
-            mexPrintf("(%zd) - A[%zd][%d,%d] = %f.\n", idx, i - 1, row[i-1][idx], col[i-1][idx], val[i-1][idx]);
+               mexPrintf("(%zd) - A[%zd][%d,%d] = %f.\n", idx, i - 1, row[i-1][idx], col[i-1][idx], val[i-1][idx]);
 #endif
-            idx++;
+               idx++;
+            }
          }
          midx++;
       }
@@ -531,6 +542,8 @@ void addSDPConstraint(
 #ifdef DEBUG
    mexPrintf("Added SDP constraint %d.\n",block);
 #endif
+   if ( nzerocoef > 0 )
+      mexPrintf("Found %d coefficients with absolute value less than epsilon = %g.\n", nzerocoef, SCIPepsilon(scip));
 
    for (i = SDP_N - 1; i > 0; --i)
    {
@@ -583,6 +596,7 @@ void mexFunction(
    double primtol = SCIP_DEFAULT_FEASTOL;
    double objbias = 0.0;
    int maxpresolve = -1;
+   char printlevelstr[BUFSIZE]; printlevelstr[0] = '\0';
    int printLevel = 0;
    int optsEntry = 0;
    mxArray* OPTS;
@@ -651,12 +665,12 @@ void mexFunction(
       getDblOption(OPTS, "maxtime", maxtime);
       getDblOption(OPTS, "tolrfun", primtol);
       getDblOption(OPTS, "objbias", objbias);
-      getIntOption(OPTS, "display", printLevel);
-      /* make sure level is ok */
-      if ( printLevel < 0 )
-         printLevel = 0;
-      if ( printLevel > 5 )
+      getStrOption(OPTS, "display", printlevelstr);
+      /* determine print level */
+      if ( strcmp(printlevelstr, "iter") == 0 )
          printLevel = 5;
+      if ( strcmp(printlevelstr, "final") == 0 )
+         printLevel = 3;
 
       /* set common options */
       if ( ! SCIPisInfinity(scip, maxtime) )
@@ -743,7 +757,7 @@ void mexFunction(
    dbound = mxGetPr(mxGetField(plhs[3], 0, fnames[3]));
 
    /* create empty problem */
-   SCIP_ERR( SCIPcreateProbBasic(scip,"OPTI Problem"), "Error creating basic SCIP-SCP problem");
+   SCIP_ERR( SCIPcreateProbBasic(scip, "OPTI Problem"), "Error creating basic SCIP-SCP problem");
 
    /* create continuous xtype array if empty or not supplied */
    if ( nrhs <= eXTYPE || mxIsEmpty(prhs[eXTYPE]) )
@@ -906,8 +920,8 @@ void mexFunction(
    if ( nrhs > optsEntry )
    {
       /* process specific options (overriding emphasis options) */
-      if ( mxGetField(OPTS, 0, "scipopts") )
-         processUserOpts(scip, mxGetField(OPTS, 0, "scipopts"));
+      if ( mxGetField(OPTS, 0, "solverOpts") )
+         processUserOpts(scip, mxGetField(OPTS, 0, "solverOpts"));
    }
 
    /* solve problem if not in writing mode */
@@ -954,6 +968,13 @@ void mexFunction(
 
       /* get solution status */
       *exitflag = (double)SCIPgetStatus(scip);
+   }
+   /* write file */
+   else
+   {
+      assert( strlen(probfile) > 0 );
+
+      SCIP_ERR( SCIPwriteOrigProblem(scip, probfile, NULL, FALSE), "Error writing file.");
    }
 
    /* clean up memory from MATLAB mode */
