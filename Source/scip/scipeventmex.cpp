@@ -55,7 +55,6 @@ SCIP_DECL_EVENTEXEC(eventExecCtrlC)
       raise(SIGINT);
    }
 #endif
-
    return SCIP_OKAY; /* always OK - otherwise we don't get intermediate answer */
 }
 

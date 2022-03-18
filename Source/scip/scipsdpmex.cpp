@@ -599,6 +599,7 @@ void mexFunction(
    char printlevelstr[BUFSIZE]; printlevelstr[0] = '\0';
    int printLevel = 0;
    int optsEntry = 0;
+   char probfile[BUFSIZE]; probfile[0] = '\0';
    mxArray* OPTS;
 
    /* internal vars */
@@ -671,6 +672,9 @@ void mexFunction(
          printLevel = 5;
       if ( strcmp(printlevelstr, "final") == 0 )
          printLevel = 3;
+
+      /* Check for writing mode */
+      getStrOption(OPTS, "probfile", probfile);
 
       /* set common options */
       if ( ! SCIPisInfinity(scip, maxtime) )

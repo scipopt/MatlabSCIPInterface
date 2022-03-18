@@ -26,8 +26,8 @@ if ((nargin == 0) && (nargout == 0))
 end
 
 % names and defaults
-Names = {'scipopts','globalEmphasis','heuristicsEmphasis','presolvingEmphasis','separatingEmphasis','cipfile','gamsfile','testmode'}';
-Defaults = {[],'default','default','default','default',[],[],0}';        
+Names = {'scipopts','globalEmphasis','heuristicsEmphasis','presolvingEmphasis','separatingEmphasis','cipfile','gamsfile','testmode'};
+Defaults = {[],'default','default','default','default',[],[],0};
 
 % enter and check user args
 try

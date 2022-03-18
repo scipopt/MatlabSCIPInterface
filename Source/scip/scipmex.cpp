@@ -680,7 +680,7 @@ void mexFunction(
    double objbias = 0.0;
    int printLevel = 0;
    int optsEntry = 0;
-   char cipfile[BUFSIZE]; cipfile[0] = '\0';
+   char probfile[BUFSIZE]; probfile[0] = '\0';
    mxArray* OPTS;
 
    /* internal vars */
@@ -761,8 +761,8 @@ void mexFunction(
       /* Check for nonlinear testing mode */
       getIntOption(OPTS, "testmode", tm);
 
-      /* Check for gams/cip writing mode */
-      getStrOption(OPTS, "cipfile", cipfile);
+      /* Check for writing mode */
+      getStrOption(OPTS, "probfile", probfile);
       CheckOptiVersion(OPTS);
 
       /* set common options */
@@ -1432,7 +1432,7 @@ void mexFunction(
    /* SCIP_ERR( SCIPwriteOrigProblem(scip, NULL, "cip", FALSE), "Error writing CIP File."); */
 
    /* solve problem if not in testing mode or gams writing mode */
-   if ( tm == 0 && strlen(cipfile) == 0 )
+   if ( tm == 0 && strlen(probfile) == 0 )
    {
       SCIP_RETCODE rc = SCIPsolve(scip);
 
@@ -1476,7 +1476,7 @@ void mexFunction(
       *exitflag = (double)SCIPgetStatus(scip);
    }
    /* write CIP file */
-   else if ( strlen(cipfile) )
+   else if ( strlen(probfile) )
    {
       /* presolve first */
       SCIP_ERR( SCIPpresolve(scip), "Error presolving SCIP problem!");
