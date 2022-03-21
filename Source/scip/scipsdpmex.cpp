@@ -159,8 +159,8 @@ void checkInputs(
       if ( nrhs > eXTYPE && ! mxIsEmpty(prhs[eXTYPE]) && mxGetNumberOfElements(prhs[eXTYPE]) != ndec )
          mexErrMsgTxt("xtype has incompatible dimensions");
    }
-   if ( ! mxIsEmpty(prhs[eX0]) && mxGetN(prhs[eX0]) != ndec )
-      mexErrMsgTxt("x0 has incompatible dimensions.");
+   if ( nrhs > eX0 && ! mxIsEmpty(prhs[eX0]) && (mxGetNumberOfElements(prhs[eX0]) != ndec) )
+      mexErrMsgTxt("x0 has incompatible dimensions");
 }
 
 /** get long integer option */
