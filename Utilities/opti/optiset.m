@@ -24,8 +24,8 @@ if((nargin == 0) && (nargout == 0))
 end
 
 %Names and Defaults
-Names = {'solver';'maxiter';'maxfeval';'maxnodes';'maxtime';'tolrfun';'tolafun';'tolint';'solverOpts';'dynamicOpts';'iterfun';'warnings';'display';'probfile';'derivCheck'};
-Defaults = {'auto';1e8;1e4;1e8;3600;1e-6;1e-6;1e-6;[];[];[];'critical';'off';[];'off'};
+Names = {'solver';'maxiter';'maxfeval';'maxnodes';'maxtime';'tolrfun';'tolafun';'tolint';'solverOpts';'dynamicOpts';'iterfun';'warnings';'display';'probfile';'presolvedifle';'derivCheck'};
+Defaults = {'auto';1e8;1e4;1e8;3600;1e-6;1e-6;1e-6;[];[];[];'critical';'off';[];[];'off'};
 
 %Enter and check user args
 try
@@ -71,6 +71,8 @@ switch lower(field)
         err = opticheckval.checkOptiSolver(value,field);
     case {'probfile'}
         err = opticheckval.checkChar(value,field);
+    case {'presolvedfile'}
+        err = opticheckval.checkChar(value,field);
     otherwise
         err = MException('OPTI:SetFieldError','Unrecognized parameter name ''%s''.', field);
 end
@@ -106,5 +108,6 @@ fprintf('       dynamicOpts: [ Dynamic Optimization Options Structure ] \n');
 fprintf('           iterfun: [ Iteration Callback Function, stop = iterfun(iter,fval,x) {} ] \n');
 fprintf('          warnings: [ ''all'' or {''critical''} or ''none'' ] \n');
 fprintf('           display: [ {''off''}, ''iter'', ''final'' ] \n');
-fprintf('          probfile: [ Write problem to file (will skip solving): {[]}, ''filename''] \n');
+fprintf('          probfile: [ Write problem to file: {[]}, ''filename''] \n');
+fprintf('     presolvedfile: [ Write presolved problem to file: {[]}, ''filename''] \n');
 fprintf('        derivCheck: [ Derivative Checker {''off''}, ''on'' ] \n');

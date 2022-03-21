@@ -600,6 +600,7 @@ void mexFunction(
    int printLevel = 0;
    int optsEntry = 0;
    char probfile[BUFSIZE]; probfile[0] = '\0';
+   char presolvedfile[BUFSIZE]; presolvedfile[0] = '\0';
    mxArray* OPTS;
 
    /* internal vars */
@@ -673,8 +674,13 @@ void mexFunction(
       if ( strcmp(printlevelstr, "final") == 0 )
          printLevel = 3;
 
-      /* Check for writing mode */
+      /* Check for writing problem */
       getStrOption(OPTS, "probfile", probfile);
+
+      /* Check for writing presolved problem */
+      getStrOption(OPTS, "presolvedfile", presolvedfile);
+
+      CheckOptiVersion(OPTS);
 
       /* set common options */
       if ( ! SCIPisInfinity(scip, maxtime) )
@@ -928,58 +934,63 @@ void mexFunction(
          processUserOpts(scip, mxGetField(OPTS, 0, "solverOpts"));
    }
 
-   /* solve problem if not in writing mode */
-   if ( strlen(probfile) == 0 )
+   /* possibly write file */
+   if ( strlen(probfile) > 0 )
    {
-      /* solve problem */
-      SCIP_RETCODE rc = SCIPsolve(scip);
-
-      if ( rc != SCIP_OKAY )
-      {
-         /* clean up general SCIP memory (if possible) */
-         SCIPfree(&scip);
-
-         /* display error */
-         sprintf(msgbuf, "Error Solving SCIP-SDP Problem, Error: %s (Code: %d)", scipErrCode(rc), rc);
-         mexErrMsgTxt(msgbuf);
-      }
-
-      /* assign return arguments */
-      if ( SCIPgetNSols(scip) > 0 )
-      {
-         SCIP_SOL* scipbestsol = SCIPgetBestSol(scip);
-
-         /* assign x */
-         for (i = 0; i < ndec; i++)
-            x[i] = SCIPgetSolVal(scip, scipbestsol, vars[i]);
-
-         /* assign fval */
-         *fval = SCIPgetSolOrigObj(scip, scipbestsol);
-
-         /* get solve statistics */
-         *nodes = (double)SCIPgetNTotalNodes(scip);
-         *gap = SCIPgetGap(scip);
-         *pbound = SCIPgetPrimalbound(scip);
-         *dbound = SCIPgetDualbound(scip);
-      }
-      else /* no solution found */
-      {
-         *fval = std::numeric_limits<double>::quiet_NaN();
-         *gap = std::numeric_limits<double>::infinity();
-         *pbound = std::numeric_limits<double>::quiet_NaN();
-         *dbound = std::numeric_limits<double>::quiet_NaN();
-      }
-
-      /* get solution status */
-      *exitflag = (double)SCIPgetStatus(scip);
-   }
-   /* write file */
-   else
-   {
-      assert( strlen(probfile) > 0 );
-
       SCIP_ERR( SCIPwriteOrigProblem(scip, probfile, NULL, FALSE), "Error writing file.");
    }
+
+   /* possibly write presolved file */
+   if ( strlen(presolvedfile) > 0 )
+   {
+      /* presolve first */
+      SCIP_ERR( SCIPpresolve(scip), "Error presolving SCIP problem!");
+
+      /* now write */
+      SCIP_ERR( SCIPwriteTransProblem(scip, presolvedfile, NULL, FALSE), "Error writing presolved file.");
+   }
+
+   /* solve problem */
+   SCIP_RETCODE rc = SCIPsolve(scip);
+
+   if ( rc != SCIP_OKAY )
+   {
+      /* clean up general SCIP memory (if possible) */
+      SCIPfree(&scip);
+
+      /* display error */
+      sprintf(msgbuf, "Error Solving SCIP-SDP Problem, Error: %s (Code: %d)", scipErrCode(rc), rc);
+      mexErrMsgTxt(msgbuf);
+   }
+
+   /* assign return arguments */
+   if ( SCIPgetNSols(scip) > 0 )
+   {
+      SCIP_SOL* scipbestsol = SCIPgetBestSol(scip);
+
+      /* assign x */
+      for (i = 0; i < ndec; i++)
+         x[i] = SCIPgetSolVal(scip, scipbestsol, vars[i]);
+
+      /* assign fval */
+      *fval = SCIPgetSolOrigObj(scip, scipbestsol);
+
+      /* get solve statistics */
+      *nodes = (double)SCIPgetNTotalNodes(scip);
+      *gap = SCIPgetGap(scip);
+      *pbound = SCIPgetPrimalbound(scip);
+      *dbound = SCIPgetDualbound(scip);
+   }
+   else /* no solution found */
+   {
+      *fval = std::numeric_limits<double>::quiet_NaN();
+      *gap = std::numeric_limits<double>::infinity();
+      *pbound = std::numeric_limits<double>::quiet_NaN();
+      *dbound = std::numeric_limits<double>::quiet_NaN();
+   }
+
+   /* get solution status */
+   *exitflag = (double)SCIPgetStatus(scip);
 
    /* clean up memory from MATLAB mode */
    mxFree(xtype);

@@ -681,6 +681,7 @@ void mexFunction(
    int printLevel = 0;
    int optsEntry = 0;
    char probfile[BUFSIZE]; probfile[0] = '\0';
+   char presolvedfile[BUFSIZE]; presolvedfile[0] = '\0';
    mxArray* OPTS;
 
    /* internal vars */
@@ -761,8 +762,12 @@ void mexFunction(
       /* Check for nonlinear testing mode */
       getIntOption(OPTS, "testmode", tm);
 
-      /* Check for writing mode */
+      /* Check for writing problem */
       getStrOption(OPTS, "probfile", probfile);
+
+      /* Check for writing presolved problem */
+      getStrOption(OPTS, "presolvedfile", presolvedfile);
+
       CheckOptiVersion(OPTS);
 
       /* set common options */
@@ -1429,10 +1434,24 @@ void mexFunction(
          processUserOpts(scip, mxGetField(OPTS, 0, "solverOpts"));
    }
 
-   /* SCIP_ERR( SCIPwriteOrigProblem(scip, NULL, "cip", FALSE), "Error writing CIP File."); */
+   /* possibly write file */
+   if ( strlen(probfile) > 0 )
+   {
+      SCIP_ERR( SCIPwriteOrigProblem(scip, probfile, NULL, FALSE), "Error writing file.");
+   }
 
-   /* solve problem if not in testing mode or gams writing mode */
-   if ( tm == 0 && strlen(probfile) == 0 )
+   /* possibly write presolved file */
+   if ( strlen(presolvedfile) > 0 )
+   {
+      /* presolve first */
+      SCIP_ERR( SCIPpresolve(scip), "Error presolving SCIP problem!");
+
+      /* now write */
+      SCIP_ERR( SCIPwriteTransProblem(scip, presolvedfile, NULL, FALSE), "Error writing presolved file.");
+   }
+
+   /* solve problem if not in testing mode */
+   if ( tm == 0 )
    {
       SCIP_RETCODE rc = SCIPsolve(scip);
 
@@ -1474,15 +1493,6 @@ void mexFunction(
 
       /* get solution status */
       *exitflag = (double)SCIPgetStatus(scip);
-   }
-   /* write CIP file */
-   else if ( strlen(probfile) )
-   {
-      /* presolve first */
-      SCIP_ERR( SCIPpresolve(scip), "Error presolving SCIP problem!");
-
-      /* now write */
-      SCIP_ERR( SCIPwriteTransProblem(scip, probfile, NULL, false), "Error writing file.");
    }
    /* else return test status */
    else
