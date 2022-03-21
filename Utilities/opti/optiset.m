@@ -24,7 +24,7 @@ if((nargin == 0) && (nargout == 0))
 end
 
 %Names and Defaults
-Names = {'solver';'maxiter';'maxfeval';'maxnodes';'maxtime';'tolrfun';'tolafun';'tolint';'solverOpts';'dynamicOpts';'iterfun';'warnings';'display';'probfile';'presolvedifle';'derivCheck'};
+Names = {'solver';'maxiter';'maxfeval';'maxnodes';'maxtime';'tolrfun';'tolafun';'tolint';'solverOpts';'dynamicOpts';'iterfun';'warnings';'display';'probfile';'presolvedfile';'derivCheck'};
 Defaults = {'auto';1e8;1e4;1e8;3600;1e-6;1e-6;1e-6;[];[];[];'critical';'off';[];[];'off'};
 
 %Enter and check user args
