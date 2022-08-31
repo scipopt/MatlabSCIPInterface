@@ -94,8 +94,13 @@ void msginfo(
    const char*           msg                 /**< message string to output */
    )
 {
-    mexPrintf(msg);
-    mexEvalString("drawnow;");  /* flush draw buffer */
+   if ( file != NULL && file != stdout )
+      fputs(msg, file);
+   else
+   {
+      mexPrintf(msg);
+      mexEvalString("drawnow;");  /* flush draw buffer */
+   }
 }
 
 /** check all inputs for size and type errors */
