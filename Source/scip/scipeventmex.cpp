@@ -8,9 +8,11 @@
  * - Marc Pfetsch
  */
 
-#include "mex.h"
 #include <signal.h>
 #include <scip/scip.h>
+
+/* include this file last, since it redefines printf, which clashes with some definitions in SCIP */
+#include "mex.h"
 
 #ifndef HAVE_OCTAVE
 /* The ut functions are private functions within Matlab; we do not need them for octave. */

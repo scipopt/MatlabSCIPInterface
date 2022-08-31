@@ -16,8 +16,10 @@
 #include "scip/def.h"
 #include "scip/scip.h"
 #include "scip/scipdefplugins.h"
-#include "mex.h"
 #include "scipnlmex.h"
+
+/* include this file last, since it redefines printf, which clashes with some definitions in SCIP */
+#include "mex.h"
 
 /* enable for debugging: */
 /* #define DEBUG 1 */

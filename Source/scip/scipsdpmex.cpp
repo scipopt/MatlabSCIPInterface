@@ -8,7 +8,6 @@
  * - Marc Pfetsch
  */
 
-#include "mex.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <cmath>
@@ -23,6 +22,9 @@
 #include "scipeventmex.h"
 #include "opti_build_utils.h"
 #include "scipnlmex.h"
+
+/* include this file last, since it redefines printf, which clashes with some definitions in SCIP */
+#include "mex.h"
 
 using namespace std;
 
