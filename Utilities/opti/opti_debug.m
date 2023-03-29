@@ -4,12 +4,12 @@ function opti_debug()
 
 fid = fopen('opti_debug.txt','w');
 if(fid < 0)
-    error('Cannot create a debug file in the current directory. Please re run in a directory you have write permissions');
+    error('Cannot create a debug file in the current directory. Please rerun in a directory you have write permissions.');
 end
 
 try
     % header
-    fprintf(fid,'OPTI Debug File generated %s\n\n',datestr(now));
+    fprintf(fid,'OPTI debug file generated %s.\n\n',datestr(now));
 
     % environment variable information
     fprintf(fid,'OS: %s\n',getenv('OS'));
@@ -44,12 +44,7 @@ try
     p = which('optiver.m');
     if(~isempty(p))
         % print version
-        if (optiSolver('scip',0))
-            str = 'Academic';
-        else
-            str = 'Open Source';
-        end
-        fprintf(fid,'\nOPTI: v%4.2f (%s)\n', optiver, str);
+        fprintf(fid,'\nOPTI: v%4.2f\n', optiver);
         % print install location
         fprintf(fid,'Install Location: %s\n', which('matlabSCIPInterface_install.m'));
 
