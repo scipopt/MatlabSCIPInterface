@@ -1341,10 +1341,7 @@ end
 if(isfield(prob,'probtype')), prob = rmfield(prob,'probtype'); end
 
 %Run Derivative Checker If Requested
-if(strcmpi(opts.derivCheck,'on'))
-    checkDerivs(prob,warn);
-end
-        
+% checkDerivs(prob,warn);
 
 function c = checkInt(c,ndec)
 %Check and assign the Integer Constraints
