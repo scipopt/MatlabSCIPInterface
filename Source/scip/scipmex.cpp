@@ -685,10 +685,11 @@ void mexFunction(
    double maxtime = 1e20;
    double primtol = SCIP_DEFAULT_FEASTOL;
    double objbias = 0.0;
-   int printLevel = 0;
    int optsEntry = 0;
-   char probfile[BUFSIZE]; probfile[0] = '\0';
-   char presolvedfile[BUFSIZE]; presolvedfile[0] = '\0';
+   int printLevel = 0;
+   char displaylevel[BUFSIZE] = "";
+   char probfile[BUFSIZE] = "";
+   char presolvedfile[BUFSIZE] = "";
    mxArray* OPTS;
 
    /* internal vars */
@@ -759,11 +760,14 @@ void mexFunction(
       getDblOption(OPTS, "maxtime", maxtime);
       getDblOption(OPTS, "tolrfun", primtol);
       getDblOption(OPTS, "objbias", objbias);
-      getIntOption(OPTS, "display", printLevel);
-      /* make sure level is ok */
-      if ( printLevel < 0 )
+
+      /* determine print level */
+      getStrOption(OPTS, "display", displaylevel);
+      if ( strncasecmp(displaylevel, "off", BUFSIZE) == 0 )
          printLevel = 0;
-      if ( printLevel > 5 )
+      else if ( strncasecmp(displaylevel, "iter", BUFSIZE) == 0 )
+         printLevel = 3;
+      else if ( strncasecmp(displaylevel, "full", BUFSIZE) == 0 )
          printLevel = 5;
 
       /* Check for nonlinear testing mode */
