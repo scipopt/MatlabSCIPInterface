@@ -8,21 +8,20 @@ function [x,fval,exitflag,info] = opti_scip(H,f,A,rl,ru,lb,ub,xint,sos,qc,x0,opt
 %                                              for j = 1..m: xj in {0,1}
 %
 %   x = opti_scip([],f,A,rl,ru,lb,ub,xint,x0) solves a LP/MILP where f is the
-%   objective vector, A,rl,ru are the linear constraints, lb,ub are the
+%   objective vector, A, rl, ru are the linear constraints, lb, ub are the
 %   bounds and xint is a string of integer variables ('C', 'I', 'B'). The
 %   point x0 provides a primal solution.
 %
 %   x = opti_scip(H,f,A,rl,ru,lb,ub,xint,x0) solves a QP/MIQP where H is the
 %   objective matrix, and the remainder of the arguments are as above.
 %
-%   x = opti_scip(H,...,xint,sos,x0) sos is a structure with fields type,
+%   x = opti_scip(H,...,xint,sos,x0): sos is a structure with fields type,
 %   index, and weight for SOS.
 %
-%   x = opti_scip(H,...,sos,qc,x0) qc is structure with fields Q, l, and qrl
+%   x = opti_scip(H,...,sos,qc,x0): qc is structure with fields Q, l, and qrl
 %   and qru for quadratic constraints.
 %
-%   x = opti_scip(H,f,...,qc,x0,opts) uses opts to pass optiset options to the
-%   solver.
+%   x = opti_scip(H,f,...,qc,x0,opts) passes optiset options to the solver.
 %
 %   [x,fval,exitflag,info] = opti_scip(...) returns the objective value at
 %   the solution, together with the solver exitflag, and an information
@@ -31,6 +30,7 @@ function [x,fval,exitflag,info] = opti_scip(H,f,A,rl,ru,lb,ub,xint,sos,qc,x0,opt
 %   This is a wrapper for SCIP using the mex interface.
 %   See the license for SCIP.
 %   Copyright (C) 2012 Jonathan Currie (IPL)
+%   Copyright (C) 2023 Marc Pfetsch
 
 t = tic;
 
@@ -85,7 +85,7 @@ end
 % remove H if all nz
 if(~isempty(H) && nnz(H) == 0), H = []; end
 
-% MEX contains error checking
+% run SCIP
 [x,fval,exitflag,stats] = scip(H, f, A, rl, ru, lb, ub, xint, sos, qc, [], x0, opts);
 
 % assign outputs
@@ -98,14 +98,3 @@ info.Algorithm = 'SCIP: Spatial Branch and Bound';
 
 % process return code
 [info.Status,exitflag] = scipRetCode(exitflag);
-
-% return display level
-function print_level = dispLevel(lev)
-switch(lower(lev))
-    case 'off'
-        print_level = 0;
-    case 'iter'
-        print_level = 4;
-    case 'final'
-        print_level = 3;
-end

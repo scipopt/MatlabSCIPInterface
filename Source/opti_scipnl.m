@@ -45,8 +45,7 @@ function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint
 %   verify your objective and constraints have been successfully
 %   converted to SCIP expressions.
 %
-%   x = opti_scipnl(fun,...,x0,opts) uses opts to pass optiset options to the
-%   solver.
+%   x = opti_scipnl(fun,...,x0,opts) passes optiset options to the solver.
 %
 %   [x,fval,exitflag,info] = opti_scipnl(...) returns the objective value at
 %   the solution, together with the solver exitflag, and an information
@@ -55,6 +54,7 @@ function [x,fval,exitflag,info] = opti_scipnl(fun,A,rl,ru,lb,ub,nlcon,cl,cu,xint
 %   This is a wrapper for SCIP using the mex interface.
 %   See the SCIP license.
 %   Copyright (C) 2012/2013 Jonathan Currie (IPL)
+%   Copyright (C) 2023 Marc Pfetsch
 
 t = tic;
 
@@ -74,7 +74,7 @@ if nargin < 2, A = []; end
 if nargin < 1, error('You must supply at least one argument to opti_scipnl.'); end
 
 % check for number of decision variables
-if(~isempty(xval))       % vector or matrix
+if(~isempty(xval))     % vector or matrix
     ndec = numel(xval);
 elseif(~isempty(lb))   % vector
     ndec = length(lb);
@@ -181,36 +181,8 @@ if(~isempty(A) && ~issparse(A))
     A = sparse(A);
 end
 
-% adding SCIP settings if specified
-if(isfield(opts,'solverOpts') && ~isempty(opts.solverOpts))
-    sopts = scipset(opts.solverOpts);
-else
-    sopts = [];
-end
-
-% add OPTI options
-if(isfield(opts,'maxtime') && ~isempty(opts.maxtime))
-    sopts.maxtime = opts.maxtime;
-end
-if(isfield(opts,'maxiter') && ~isempty(opts.maxiter))
-    sopts.maxiter = opts.maxiter;
-end
-if(isfield(opts,'maxnodes') && ~isempty(opts.maxnodes))
-    sopts.maxnodes = opts.maxnodes;
-end
-if(isfield(opts,'tolrfun') && ~isempty(opts.tolrfun))
-    sopts.tolrfun = opts.tolrfun;
-end
-if(isfield(opts,'objbias') && ~isempty(opts.objbias))
-    sopts.objbias = opts.objbias;
-end
-if(isfield(opts,'display') && ~isempty(opts.display))
-    sopts.display = dispLevel(opts.display);
-end
-sopts.optiver = optiver;
-
 % run SCIP
-[x,fval,exitflag,stats] = scip([],zeros(ndec,1),A,rl,ru,lb,ub,xint,[],[],nl,x0,sopts);
+[x,fval,exitflag,stats] = scip([], zeros(ndec,1), A, rl, ru, lb, ub, xint, [], [], nl, x0, opts);
 
 % reshape output
 x = reshape(x,size(xval));
@@ -225,18 +197,6 @@ info.Algorithm = 'SCIP: Spatial Branch and Bound';
 
 % process return code
 [info.Status,exitflag] = scipRetCode(exitflag);
-
-
-% return CLP compatible display level
-function  print_level = dispLevel(lev)
-switch(lower(lev))
-    case'off'
-        print_level = 0;
-    case 'iter'
-        print_level = 4;
-    case 'final'
-        print_level = 3;
-end
 
 function ex = processEqErr(ME,name)
 

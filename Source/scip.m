@@ -26,13 +26,15 @@
 %       exitflag - exit status (see below)
 %       stats - statistics structure
 %
-%   Option Fields (all optional - also see scipset):
-%       tolrfun - LP primal convergence tolerance
+%   Option Fields (all optional, see also optiset for a list):
+%       solverOpts - specific SCIP options (list of pairs of parameter names and values)
 %       maxiter - maximum LP solver iterations
 %       maxnodes - maximum nodes to explore
 %       maxtime - maximum execution time [s]
+%       tolrfun - primal feasibility tolerance
 %       display - solver display level [0-5]
-%       objbias - constant objective bias term
+%       probfile - write problem to given file
+%       presolvedfile - write presolved problem to file
 %
 %   Return Status:
 %       0 - Unknown
@@ -56,7 +58,7 @@
 %       index   - A double array of the indices of the variables in the SOS,
 %                 group multiple SOS index arrays in a cell array.
 %       weight  - A double array of the weights of each of the variable
-%                 above, indicating variables next to each other. Group 
+%                 above, indicating variables next to each other. Group
 %                 multiple SOS via cell arrays as above.
 %
 %   Quadratic Constraints (QC) [qrl <= x'Qx + l'x <= qru]:
@@ -69,7 +71,7 @@
 %       qrl     - A scalar representing the quadratic constraint lower
 %                 bound. Group multiple quadratic constraints in a
 %                 column vector, each row representing each constraint.
-%       qru     - A scalar representing the quadratic constraint upper 
+%       qru     - A scalar representing the quadratic constraint upper
 %                 bound. Group multiple quadratic constraints in a
 %                 column vector, each row representing each constraint.
 %
