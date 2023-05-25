@@ -4,10 +4,9 @@
 % solve them using the OPTI Toolbox.
 %
 %   Copyright (C) 2014 Jonathan Currie (IPL)
+%   Copyright (C) 2023 Marc Pfetsch
 
-%% Determing which Solver to Use
-% OPTI Toolbox comes with a number of MILP solvers, thus to determine which
-% ones are available on your system you can type:
+%% Showing the available solvers
 clc
 optiSolver('MILP')
 
@@ -21,7 +20,7 @@ b = [16;28;6];
 lb = [0;0];                 % bounds on x (lb <= x <= ub)
 ub = [10;10];
 xtype = 'II';               % integer variables (I = integer, C = continuous, B = binary)
-x0 = [0,0];
+x0 = [0,0];                 % primal solution
 
 % Building an MILP problem is very similar to an LP, except just add the
 % 'xtype' argument for integer variables:
@@ -47,7 +46,7 @@ solve(Opt);
 
 plot(Opt)
 
-% Example 6 - Sparse MILPs
+% Example 4 - Sparse MILPs
 % As with LPs, all solvers are setup to directly solve sparse systems, which
 % is the preferred format for most solvers:
 clc
@@ -60,7 +59,7 @@ Opt = opti('f',f,'ineq',A,b,'eq',Aeq,beq,'xtype',find(xint),'options',opts)
 fval
 info
 
-%% Problem 4
+%% Example 5
 % MILP with Special Ordered Sets (SOS)
 clc
 % problem
@@ -82,3 +81,22 @@ opts = optiset('solver','scip');
 Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'sos',sos_type,sos_index,sos_weight,'options',opts)
 
 [x,fval,exitflag,info] = solve(Opt)
+
+
+%% Example 6
+% Set solver options
+clc
+f = -[6 5]';                % objective function (min f'x)
+A = [1,4; 6,4; 2, -5];      % linear inequality constraints (Ax <= b)
+b = [16;28;6];
+lb = [0;0];                 % bounds on x (lb <= x <= ub)
+ub = [10;10];
+xtype = 'II';               % integer variables (I = integer, C = continuous, B = binary)
+x0 = [0,0];                 % primal solution
+
+solverOpts = {'limits/bestsol',2};  % stop once best solution is updateds
+opts = optiset('display','iter','solverOpts',solverOpts);
+Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype,'options',opts)
+
+% Call solve to solve the problem:
+[x,fval,exitflag,info] = solve(Opt,x0)
