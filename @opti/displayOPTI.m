@@ -353,46 +353,8 @@ disp('------------------------------------------------------');
 
 %**************** Solver ****************%
 disp('  Solver Parameters:')
-dopts = optidynset(opts.dynamicOpts);
-if(strcmpi(opts.solver,'nlopt'))
-    fprintf('Solver:                    %s with %s\n',upper(opts.solver),upper(nloptSolver(O.nlprob.options.algorithm)));
-else
-    fprintf('Solver:                    %s\n',upper(opts.solver));
-end
 
-if(strcmpi(prob.type,'DNLS'))
-    fprintf('ODE Integrator:            %s\n',upper(dopts.integrator));        
-    if(~strcmpi(dopts.sensitivity,'none')) 
-        if(isempty(dopts.sensitivity)), dopts.sensitivity = 'user'; end
-        
-        switch(lower(dopts.sensitivity))
-            case 'nd', dfdz = 'Numerical Differentiation';
-            case 'ad', dfdz = 'Automatic Differentiation';   
-            case 'cs', dfdz = 'Complex-Step Differentiation';
-            case 'user'
-                if(~isempty(dopts.dfdz))
-                    dfdz = 'User Supplied';
-                else
-                    dfdz = 'Numerical Differentiation'; %default alternative
-                end
-        end            
-        
-        switch(lower(dopts.sensitivity))
-            case 'nd', dfdp = 'Numerical Differentiation';
-            case 'ad', dfdp = 'Automatic Differentiation';    
-            case 'cs', dfdp = 'Complex-Step Differentiation';
-            case 'user'
-                if(~isempty(dopts.dfdz))
-                    dfdp = 'User Supplied';
-                else
-                    dfdp = 'Numerical Differentiation'; %default alternative
-                end
-        end 
-        fprintf('Sensitivity DFDZ:          %s\n',dfdz);
-        fprintf('Sensitivity DFDP:          %s\n',dfdp);
-    end
-
-elseif(any(strcmpi(prob.type,{'SNLE','SCNLE','NLS','NLP','UNO','MINLP'})) && isa(prob.fun,'function_handle'))
+if(any(strcmpi(prob.type,{'SNLE','SCNLE','NLS','NLP','UNO','MINLP'})) && isa(prob.fun,'function_handle'))
     if(prob.numdif.grad), fnd = ' [numdiff]'; else fnd = ''; end
     %Get solver info
     info = optiSolverInfo(opts.solver,prob.type,O.nlprob,opts);
