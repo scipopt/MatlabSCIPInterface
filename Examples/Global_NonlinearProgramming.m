@@ -10,7 +10,7 @@
 % OPTI Toolbox comes with a number of NLP solvers, thus to determine which
 % ones are available on your system you can type:
 clc
-optiSolver('NLP')
+optiSolver('NLP');
 
 % Note the columns DR and GL. A cross in DR indicates the solver requires
 % 1st (and perhaps 2nd) derivatives, while a cross in GL indicates the
@@ -66,10 +66,10 @@ x0 = [0;0];
 % Solving a constrained global optimization problem. Note linear
 % constraints will be converted to nonlinear ones for this solver.
 opts = optiset('solver','scip');
-Opt = opti('fun',fun,'ineq',A,b,'nlmix',nlcon,nlrhs,nle,'bounds',lb,ub,'options',opts)
+Opt = opti('fun',fun,'ineq',A,b,'nlmix',nlcon,nlrhs,nle,'bounds',lb,ub,'options',opts);
 
 % this may take a few seconds ...
-[x,fval,exitflag,info] = solve(Opt,x0)
+[x,fval,exitflag,info] = solve(Opt,x0);
 
 % TODO Commented out because it ran endlessly or looped
 % %% Example 3 - Solving with PSwarm
@@ -125,10 +125,10 @@ x0 = [0;0];
 % SCIP solves a subset of nonlinear and mixed integer problems, provided
 % the problem is deterministics and constains a subset of allowable functions.
 Opt = opti('fun',fun,'ineq',A,b,'nlmix',nlcon,nlrhs,nle,'bounds',lb,ub,...
-           'options',optiset('solver','scip'))
+           'options',optiset('solver','scip'));
 
-[x,fval,exitflag,info] = solve(Opt,x0)
-plot(Opt)
+[x,fval,exitflag,info] = solve(Opt,x0);
+plot(Opt);
 
 %% Summary
 % While Global Optimization solvers may take longer, many real

@@ -12,7 +12,7 @@
 % OPTI Toolbox comes with a number of QP solvers, thus to determine which
 % ones are available on your system you can type:
 clc
-optiSolver('QP')
+optiSolver('QP');
 
 %% Example 1
 % This is a simple two decision variable QP which will use for the next
@@ -27,28 +27,28 @@ lb = [0;0];                 % bounds on x (lb <= x <= ub)
 
 % Building an QP problem is very similar to an LP, except just add the
 % H argument for the problem quadratic objective
-Opt = opti('H',H,'f',f,'ineq',A,b,'lb',lb)
+Opt = opti('H',H,'f',f,'ineq',A,b,'lb',lb);
 
 % call solve to solve the problem
-[x,fval,exitflag,info] = solve(Opt)
+[x,fval,exitflag,info] = solve(Opt);
 
 %% Example 2 - Alternative Setup Strategies
 % Naming of arguments, as well as pairing is flexible when using optiprob
 clc
-Opt = opti('hess',H,'f',f,'ineq',A,b,'lb',lb) %hess = H
+Opt = opti('hess',H,'f',f,'ineq',A,b,'lb',lb); %hess = H
 
 % OR
-Opt = opti('H',H,'grad',f,'ineq',A,b,'lb',lb) %grad = f
+Opt = opti('H',H,'grad',f,'ineq',A,b,'lb',lb); %grad = f
 
 % OR
-Opt = opti('qp',H,f,'ineq',A,b,'lb',lb)
+Opt = opti('qp',H,f,'ineq',A,b,'lb',lb);
 
 %% Example 3 - Plotting the Solution
 % Several problem types have a default plot command available IF the
 % problem contains two variables.
 
 solve(Opt);
-plot(Opt)
+plot(Opt);
 
 %% Example 4 - Indefinite QP
 % OPTI QP solvers only solve Positive Definite problems. However you can
@@ -65,9 +65,9 @@ ub = [1;1];
 opts = optiset('solver','scip');
 
 % create OPTI object
-Opt = opti('qp',H,f,'bounds',lb,ub,'options',opts)
+Opt = opti('qp',H,f,'bounds',lb,ub,'options',opts);
 
 % solve the indefinite QP
-[x,f] = solve(Opt)
+[x,f] = solve(Opt);
 
-plot(Opt,2)
+plot(Opt,2);

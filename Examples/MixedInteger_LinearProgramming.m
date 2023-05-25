@@ -8,7 +8,7 @@
 
 %% Showing the available solvers
 clc
-optiSolver('MILP')
+optiSolver('MILP');
 
 %% Example 1
 % This is a simple two decision variable MILP which will use for the next
@@ -25,10 +25,10 @@ x0 = [0,0];                 % primal solution
 % Building an MILP problem is very similar to an LP, except just add the
 % 'xtype' argument for integer variables:
 opts = optiset('display','off');
-Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype,'options',opts)
+Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype,'options',opts);
 
 % Call solve to solve the problem:
-[x,fval,exitflag,info] = solve(Opt,x0)
+[x,fval,exitflag,info] = solve(Opt,x0);
 
 %% Example 2 - Alternative Integer Setup
 % You can also supply an vector of integer indices indicating the position of
@@ -44,7 +44,7 @@ solve(Opt);
 % Several problem types have a default plot command available. Note for
 % MILP plots it will also plot the integer constraints.
 
-plot(Opt)
+plot(Opt);
 
 % Example 4 - Sparse MILPs
 % As with LPs, all solvers are setup to directly solve sparse systems, which
@@ -54,7 +54,7 @@ clc
 load sparseMILP1;
 
 opts = optiset('solver','scip');    % solve with SCIP
-Opt = opti('f',f,'ineq',A,b,'eq',Aeq,beq,'xtype',find(xint),'options',opts)
+Opt = opti('f',f,'ineq',A,b,'eq',Aeq,beq,'xtype',find(xint),'options',opts);
 [x,fval,exitflag,info] = solve(Opt);
 fval
 info
@@ -78,9 +78,9 @@ sos_weight = [1 2 3 4 5]';
 % Build the problem, specifying the three SOS fields. Note only some MILP
 % solvers are setup to solve problems with SOS:
 opts = optiset('solver','scip');
-Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'sos',sos_type,sos_index,sos_weight,'options',opts)
+Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'sos',sos_type,sos_index,sos_weight,'options',opts);
 
-[x,fval,exitflag,info] = solve(Opt)
+[x,fval,exitflag,info] = solve(Opt);
 
 
 %% Example 6
@@ -96,7 +96,7 @@ x0 = [0,0];                 % primal solution
 
 solverOpts = {'limits/bestsol',2};  % stop once best solution is updateds
 opts = optiset('display','iter','solverOpts',solverOpts);
-Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype,'options',opts)
+Opt = opti('f',f,'ineq',A,b,'bounds',lb,ub,'xtype',xtype,'options',opts);
 
 % Call solve to solve the problem:
-[x,fval,exitflag,info] = solve(Opt,x0)
+[x,fval,exitflag,info] = solve(Opt,x0);

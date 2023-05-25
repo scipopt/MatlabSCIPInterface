@@ -12,7 +12,7 @@
 % OPTI Toolbox comes with a number of NLP solvers, thus to determine which
 % ones are available on your system you can type:
 clc
-optiSolver('NLP')
+optiSolver('NLP');
 
 %% NLP Considerations - 1st Derivatives
 % See DifferentationExamples.m
@@ -61,10 +61,12 @@ lb = [-inf; -1.5];      % bounds on x (lb <= x <= ub)
 x0 = [-2; 1];           % starting guess of solution
 
 % build OPTI problem
-Opt = opti('obj',obj,'grad',grad,'lb',lb)
+solverOpts = {'display/freq',1000};  % output every 1000 nodes
+opts = optiset('display','iter','solverOpts',solverOpts);
+Opt = opti('obj',obj,'grad',grad,'lb',lb,'options',opts);
 
 % Call solve to solve the problem:
-[x,fval,exitflag,info] = solve(Opt,x0)
+[x,fval,exitflag,info] = solve(Opt,x0);
 
 %% Example 2 - Alternative Setup Strategies
 % Naming of arguments, as well as pairing is flexible when using opti
@@ -80,9 +82,9 @@ Opt = opti('obj',obj,'f',grad,'lb',lb); %f = grad
 % used for the gradient.
 
 clc
-Opt = opti('obj',obj,'lb',lb)
+Opt = opti('obj',obj,'lb',lb);
 
-x = solve(Opt, x0)
+x = solve(Opt, x0);
 
 %% Example 4 - Unconstrained Nonlinear Optimization
 % If you do not supply any constraints OPTI will solve the problem using an
@@ -90,9 +92,11 @@ x = solve(Opt, x0)
 % number of decision variables you must supply this to optiprob:
 
 clc
-Opt = opti('obj',obj,'ndec',2)
+solverOpts = {'display/freq',1000};  % output every 1000 nodes
+opts = optiset('display','iter','solverOpts',solverOpts);
+Opt = opti('obj',obj,'ndec',2,'solverOpts','options',opts);
 
-x = solve(Opt, x0)
+x = solve(Opt, x0);
 
 %TODO Commented as this problem takes a very long time or loops
 % %% Example 5 - Nonlinear Constraints
@@ -158,9 +162,11 @@ x0 = [-3  -1  -3  -1]';
 % some solvers require a TRIL, TRIU or SYM Hessian. For instance IPOPT uses
 % TRIL (assumes symmetric), while FMINCON requires the full Hessian. Make
 % sure to configure your inputs as per the solver you're using.
-Opt = opti('obj',obj,'grad',grad,'hess',hess,'Hstr',Hstr,'bounds',lb,ub)
+solverOpts = {'display/freq',1000};  % output every 1000 nodes
+opts = optiset('display','iter','solverOpts',solverOpts);
+Opt = opti('obj',obj,'grad',grad,'hess',hess,'Hstr',Hstr,'bounds',lb,ub,'options',opts);
 
-[x,fval,exitflag,info] = solve(Opt,x0)
+[x,fval,exitflag,info] = solve(Opt,x0);
 
 %% A Note on Hessians (2nd Derivatives)
 % Be aware the Hessian required by OPTI is the Hessian of the Lagrangian.
