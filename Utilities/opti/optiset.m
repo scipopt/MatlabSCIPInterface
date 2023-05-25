@@ -39,7 +39,7 @@ catch ME
     throw(ME);
 end
 
-%Ensure backwards compatible
+% Ensure backwards compatible
 if(strcmpi(options.warnings,'on'))
     options.warnings = 'all';
 elseif(strcmpi(options.warnings,'off'))
@@ -47,19 +47,21 @@ elseif(strcmpi(options.warnings,'off'))
 end
 
 
-function checkfield(field,value)
-%Check a field contains correct data type
-switch lower(field)
-    %Scalar non negative double
+
+function newvalue = checkfield(field,value)
+  newvalue = value;
+  % Check a field contains correct data type
+  switch lower(field)
+    % Scalar non negative double
     case {'tolafun','tolrfun','tolint'}
         err = opticheckval.checkScalarNonNeg(value,field);
-    %Scalar non zero double
+    % Scalar non zero double
     case 'maxtime'
         err = opticheckval.checkScalarGrtZ(value,field);
-    %Scalar non zero integer
+    % Scalar non zero integer
     case {'maxiter','maxnodes'}
         err = opticheckval.checkScalarIntGrtZ(value,field);
-    %Struct
+    % Struct
     case {'solveropts'}
         err = opticheckval.checkStruct(value,field);
     %Other misc
@@ -75,8 +77,10 @@ switch lower(field)
         err = opticheckval.checkChar(value,field);
     otherwise
         err = MException('OPTI:SetFieldError','Unrecognized parameter name ''%s''.', field);
-end
-if(~isempty(err)), throw(err); end
+  end
+  if ( ~isempty(err) )
+    throw(err);
+  end
 
 
 function printfields()
