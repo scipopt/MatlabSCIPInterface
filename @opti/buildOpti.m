@@ -7,10 +7,10 @@ function [prob,opts] = buildOpti(varargin)
 % Build Settings
 settings.QUAD_EIG_MAX_SIZE = 1e8;    %Maximum size (rows*cols) for a quadratic matrix before skipping eig() for non-convex check
 
-%API Change to make optiprob redundant (1/5/12)
+% API Change to make optiprob redundant (1/5/12)
 [prob,opts] = exPrbOpts(varargin{:});
 
-%Check and correct problem size and setup errors
+% Check and correct problem size and setup errors
 [prob,opts] = checkOpti(prob,opts,settings);
 
 
@@ -1451,13 +1451,13 @@ prob.iscon = 0;
 
 
 function [prob,opts] = exPrbOpts(varargin)
-%Extract the problem and options from the supplied arguments to opti
+% Extract the problem and options from the supplied arguments to opti
 
 switch(nargin)
     case 0
         optiprob;
         error('You cannot create an empty OPTI object');
-    case 1 %opti(prob) or opti(optiObj)
+    case 1 % opti(prob) or opti(optiObj)
         if(isempty(varargin{1}))
             error('You cannot create an empty OPTI object');
         elseif(isstruct(varargin{1}))
@@ -1477,7 +1477,7 @@ switch(nargin)
         else
             error('Unknown calling form for OPTI!');
         end
-    case 2 %opti(prob,opts) OR opti('field',value) OR opti(optiObj,opts) OR opti('file',opts)
+    case 2 % opti(prob,opts) OR opti('field',value) OR opti(optiObj,opts) OR opti('file',opts)
         if(isstruct(varargin{1}) && isstruct(varargin{2}))
             prob = optiprob(varargin{1});
             opts = optiset(varargin{2});
