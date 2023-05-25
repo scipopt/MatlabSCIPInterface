@@ -221,6 +221,24 @@ classdef opticheckval
             end
         end
 
+	function err = checkParamList(value,field)
+            % cell array of the form {'name1',val1,'name2',val2, ...}
+            err = [];
+            if ( ~iscell(value) )
+                err = MException('OPTI:SetFieldError', 'Parameter ''%s'' should be a cell array', field);
+            elseif( size(value,1) ~= 1 )
+	            err = MException('OPTI:SetFieldError', 'Parameter ''%s'' should be a cell array of the form {''name1'', val1, ''name2'', val2, ...}', field);
+            else
+                for i = 1:size(value,1)
+           	        if ( mod(i, 2) == 0 )
+                        if( ~ischar(value{i}) || isempty(value{i}) )
+			                err = MException('OPTI:SetFieldError', 'Parameter ''%s'' (cell ''%s'') should be a string', field, value{i});
+                        end
+	                end
+                end
+            end
+        end
+
         function err = checkChar(value,field)
             % char array
             err = [];

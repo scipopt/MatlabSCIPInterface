@@ -63,8 +63,8 @@ function newvalue = checkfield(field,value)
         err = opticheckval.checkScalarIntGrtZ(value,field);
     % Struct
     case {'solveropts'}
-        err = opticheckval.checkStruct(value,field);
-    %Other misc
+        err = opticheckval.checkParamList(value,field);
+    % Other misc
     case 'display'
         err = opticheckval.checkValidString(value,field,{'off','iter','full'});
     case 'warnings'
