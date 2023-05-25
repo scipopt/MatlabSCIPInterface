@@ -94,7 +94,7 @@ x = solve(Opt, x0);
 clc
 solverOpts = {'display/freq',1000};  % output every 1000 nodes
 opts = optiset('display','iter','solverOpts',solverOpts);
-Opt = opti('obj',obj,'ndec',2,'solverOpts','options',opts);
+Opt = opti('obj',obj,'ndec',2,'options',opts);
 
 x = solve(Opt, x0);
 
