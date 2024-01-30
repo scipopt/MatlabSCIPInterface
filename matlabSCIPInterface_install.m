@@ -190,12 +190,15 @@ end
 % directory and determine the installation method used.
 function [inc, installversion] =  setInclude(scippath)
 
-
 % include directories
 if (exist([scippath '/obj'], 'dir'))
     fprintf('\nSCIP build using ''make'' detected.\n');
     installversion = 1;
-    inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
+    if (strcmp(computer, 'GLNXA64'))
+       inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell'],[scippath '/obj/shared/O.linux.x86_64.gnu.opt/include']};
+    else
+       inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
+    end	
 elseif (exist([scippath '/build'], 'dir'))
     fprintf('\nSCIP build using ''cmake'' detected.\n');
     installversion = 2;
@@ -274,7 +277,7 @@ if ~defaultFound
         error('No SCIP library found in default location.')
     end
 end
-
+	  
 % Format the library link
 if isOctave()
     scipLibPath = ['"' scipLibPath '"'];
@@ -285,21 +288,7 @@ else
     lib = ['-L' scipLibPath];
 end
 % Append the appropriate library name
-switch(installversion)
-    case 1
-        lib = sprintf('%s -l%s',lib,'scipsolver');
-    case {2,3}
-        lib = sprintf('%s -l%s',lib,'scip');
-    case {4,5}
-        yesno = input('Was the specified SCIP library build using cmake/.exe? (y/n)','s');
-        if strcmp(yesno, 'y')
-            lib = sprintf('%s -l%s',lib,'scip');
-        else
-            lib = sprintf('%s -l%s',lib,'scipsolver');
-        end
-end
-
-expre = [expre ' -DNO_CONFIG_HEADER'];
+lib = sprintf('%s -l%s',lib,'scip');
 lib = [lib ' '];
 
 if ~strcmp(computer, 'PCWIN64')
@@ -314,22 +303,10 @@ end
 function [defaultFound, installversion] = checkScipLib(installversion, libLoc)
 
 defaultFound = false;
-if installversion == 5
-    yesno = input('\nWas the specified library build using cmake/.exe? (y/n)', 's');
-    if (strcmp(yesno,'n'))
-        installversion = 1;
-    end
+if (exist([libLoc '/libscip.so'], 'file') || exist([libLoc '/libscip.lib'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
+  defaultFound = true;
 end
 
-if installversion == 1
-    if (exist( [libLoc '/libscipsolver.so'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
-        defaultFound = true;
-    end
-else
-    if (exist([libLoc '/libscip.so'], 'file') || exist([libLoc '/libscip.lib'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
-        defaultFound = true;
-    end
-end
 
 % The function setCXXVersion allows users to specify a gcc compiler on linux
 % versions of the installation.

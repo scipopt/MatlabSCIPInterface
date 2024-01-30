@@ -242,7 +242,11 @@ function [inc, installversion] =  setIncludeSCIP(scippath)
 if (exist([scippath '/obj'], 'dir'))
     fprintf('\nSCIP build using ''make'' detected.\n');
     installversion = 1;
-    inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
+    if (strcmp(computer, 'GLNXA64'))
+       inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell'],[scippath '/obj/shared/O.linux.x86_64.gnu.opt/include']};
+    else
+       inc = {'scip/Include',[scippath '/src'],[scippath '/src/blockmemshell']};
+    end	
 elseif (exist([scippath '/build'], 'dir'))
     fprintf('\nSCIP build using ''cmake'' detected.\n');
     installversion = 2;
@@ -369,19 +373,7 @@ end
 
 
 % Append the appropriate library name
-switch(installversion)
-    case 1
-        lib = sprintf('%s -l%s',lib,'scipsolver');
-    case {2,3}
-        lib = sprintf('%s -l%s',lib,'scip');
-    case {4,5}
-        yesno = input('Was the specified SCIP library build using cmake? (y/n)','s');
-        if strcmp(yesno, 'y')
-            lib = sprintf('%s -l%s',lib,'scip');
-        else
-            lib = sprintf('%s -l%s',lib,'scipsolver');
-        end
-end
+lib = sprintf('%s -l%s',lib,'scip');
 
 switch(sdpinstallversion)
     case 1
@@ -441,14 +433,8 @@ if installversion == 5
     end
 end
 
-if installversion == 1
-    if (exist( [libLoc '/libscipsolver.so'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
-        defaultFound = true;
-    end
-else
-    if (exist([libLoc '/libscip.so'], 'file') || exist([libLoc '/libscip.lib'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
-        defaultFound = true;
-    end
+if (exist([libLoc '/libscip.so'], 'file') || exist([libLoc '/libscip.lib'], 'file') || exist([libLoc '/libscip.dll'], 'file'))
+  defaultFound = true;
 end
 
 % This functions checks if the given path contains all directories we expect
