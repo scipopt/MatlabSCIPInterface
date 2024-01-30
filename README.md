@@ -46,7 +46,7 @@ Matlab is not easy. Please see below for some known issues.
   `error: mark_as_constructed: invalid object`, see [https://savannah.gnu.org/bugs/?func=detailitem&item_id=59775].
   Until this bug is resolved, the interface will not be fully operational.
 
-- One needs least version 7 of [SCIP](https://www.scipopt.org/)
+- One needs least version 8 of [SCIP](https://www.scipopt.org/)
   and, if wanted, at least version 4 of
   [SCIPSDP](http://www.opt.tu-darmstadt.de/scipsdp/).
 
@@ -120,10 +120,6 @@ with appropriate permissions (see Common Problems: Saving path changes).
 
   Alternatively you can specify the SCIP directory during the
   installation process.
-  
-- Ensure that the path to the SCIP binaries (`pathToSCIP\bin`) is added
-  to the windows or user PATH-variable, either manually or by choosing 
-  the corresponding action in the SCIPOptSuite Installer
 
 - To start the installation process, change to the "opti" directory in
   Matlab/Octave and run the file `matlabSCIPInterface_install.m` in
@@ -175,7 +171,7 @@ might work for you:
 
   Possibly further shared libraries have to be added.
 
-  This solutions seems to work, but has the price that all comands in
+  This solution seems to work, but has the price that all comands in
   Matlab that use Lapack will fail (because they do not use MKL
   anymore). In particular, eigenvalue comutations will fail.
 
@@ -194,8 +190,12 @@ might work for you:
 
   'make IPOPT=true SHARED=true USRLDFLAGS=-Wl,-Bsymbolic'
 
-  creates 'libscipsolver.so' with no outside dependencies to Lapack or Blas.
+  creates 'libscip.so' with no outside dependencies to Lapack or Blas.
 
+- For SCIP-SDP starting from Version 4.3 you should use
+  "make ... LAPACKLONG=true" or
+  "cmake ... -DLAPACKLONG=on"
+  to use switch to "long long int" in the Lapack interface within SCIP-SDP.
 
 Any further solution options are welcome.
 
@@ -289,12 +289,10 @@ The original OPTI toolbox was released under the 3-clause BSD
 license. The changes and extensions of this interface are released
 under the same license, as detailed in the file LICENSE. It is free
 software, and is released as an open-source package. Note that SCIP
-has its own academic license.
+and SCIP-SDP are released under the Apache 2.0 license.
 
 ## Authors
 
 This interface is based on the OPTI Toolbox by Jonathan Currie. He
 wrote most of the Matlab-code. The interface has been adpated and
 extended by Nicolai Simon and Marc Pfetsch, TU Darmstadt.
-
-
