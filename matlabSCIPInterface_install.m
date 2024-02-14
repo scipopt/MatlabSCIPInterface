@@ -291,6 +291,14 @@ end
 lib = sprintf('%s -l%s',lib,'scip');
 lib = [lib ' '];
 
+% add define for old SCIP versions
+expre = [expre ' -DNO_CONFIG_HEADER'];
+
+if strcmp(mexext, 'mexw64')
+   % as a work around for a problem with freezing code on windows, we compile a debug version
+   expre = [expre ' -g'];
+end
+
 if ~strcmp(computer, 'PCWIN64')
     if isOctave()
         expre = [expre ' ''-Wl,-rpath,' scipLibPath ''' '];
